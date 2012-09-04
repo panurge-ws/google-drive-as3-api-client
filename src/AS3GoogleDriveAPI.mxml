@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" minWidth="900" minHeight="600"
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" addedToStage="windowedapplication_addedToStageHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.panurge.google.GoogleOAuth2;
+			import com.panurge.google.GoogleOAuth2Event;
+			import com.panurge.google.drive.events.GoogleDriveEvent;
+			import com.panurge.google.drive.model.GoogleDriveChangesList;
+			import com.panurge.google.drive.model.GoogleDriveChildrenList;
+			import com.panurge.google.drive.model.GoogleDriveFile;
+			import com.panurge.google.drive.model.GoogleDriveFileList;
+			import com.panurge.google.drive.model.GoogleDriveParentsList;
+			import com.panurge.google.drive.model.GoogleDrivePermissionsList;
+			import com.panurge.google.drive.model.GoogleDriveRevisionsList;
+			import com.panurge.google.drive.services.GoogleDriveClient;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.utils.ObjectUtil;
+			
+			import spark.events.IndexChangeEvent;
+			
+			private var stageWebView:StageWebView;
+			private var driveClient:GoogleDriveClient;
+			private var oAuth:GoogleOAuth2;
+			
+			
+			
+			protected function windowedapplication_addedToStageHandler(event:Event):void
+			{
+				
+				// instantiates the OAuth2 setting
+				// see https://developers.google.com/drive/quickstart
+				oAuth = new GoogleOAuth2();
+				
+				oAuth.CLIENT_ID = "XXXXXXXXXXXXXX"
+				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
+				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
+				
+				
+				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
+				
+				// we want to delegate to the framework the management of session and tokens
+				oAuth.manageSession = true;
+				
+				// instantiates the Drive Client
+				driveClient = new GoogleDriveClient(oAuth);
+				driveClient.addEventListener(GoogleDriveEvent.ERROR_EVENT, onApiError);
+				driveClient.addEventListener(GoogleDriveEvent.UPLOAD_ERROR, onApiError);
+				
+				// creates a StageWebView to host Login/Auth page prompted by Google Auth
+				stageWebView = new StageWebView();
+				stageWebView.viewPort = new Rectangle(0,0,400,400);
+				
+				// initilize the OAth2 process
+				oAuth.stageWebView = stageWebView; // note that in this moment we don't need to display the StageWebView (see: onAuthRequestInit)
+				
+				oAuth.addEventListener(GoogleOAuth2Event.AUTH_REQUEST_INIT, onAuthRequestInit);
+				oAuth.addEventListener(GoogleOAuth2Event.AUTH_FAULT, onAuthFault);
+				oAuth.addEventListener(GoogleOAuth2Event.AUTH_SUCCESS, onAuthSuccess);
+				
+				oAuth.init();
+			
+			}
+			
+			protected function onApiError(event:GoogleDriveEvent):void
+			{
+				if (event.data){
+					Alert.show("onAPIError\nerror code: " + event.data.code + "\nerror message: " + event.data.message);
+				}
+				else{
+					Alert.show("onAPIError\n: " + event.toString());
+				}
+			}
+			
+			protected function onAuthFault(event:GoogleOAuth2Event):void
+			{
+				Alert.show("onAuthFault\nerror code: " + event.code + "\nerror message: " + event.message);
+			}
+			
+			protected function onAuthRequestInit(GoogleOAuth2Event:Event):void
+			{
+				// we have to display stage web view NOW!
+				stageWebView.viewPort = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
+				stageWebView.stage = stage;
+			}
+			
+			protected function onAuthSuccess(event:GoogleOAuth2Event):void
+			{
+				oAuth.removeEventListener(GoogleOAuth2Event.AUTH_SUCCESS, onAuthSuccess);
+				
+				// the auth was succefull so we can dispose the stageWebView
+				stageWebView.dispose();
+				stageWebView = null;
+				
+				// caldriveClient.files.files_list to populate the list of files
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+				driveClient.files.files_list();
+			}
+			
+			protected function btn_get_list_clickHandler(event:MouseEvent):void
+			{
+				this.list_files.dataProvider = new ArrayCollection();
+				if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+					driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+				}
+				driveClient.files.files_list();
+			}
+			
+			protected function btn_get_all_files_list_clickHandler(event:MouseEvent):void
+			{
+				this.list_files.dataProvider = new ArrayCollection();
+				if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_ALL_LIST)){
+					driveClient.files.addEventListener(GoogleDriveEvent.FILE_ALL_LIST, onListComplete);
+				}
+				driveClient.files.files_all_list();
+			}
+			
+			protected function btn_upload_clickHandler(event:MouseEvent):void
+			{
+				var fileRef:File = new File();
+				
+				
+				
+				var onFileRefSelect:Function = function(e:Event){
+					var ba:ByteArray = new ByteArray();
+					var fileStream:FileStream = new FileStream();
+					fileStream.open(fileRef,FileMode.READ);
+					fileStream.readBytes(ba);
+					fileStream.close();
+					//fileRef.load();
+					
+					trace("fileRef", ba.length);
+					
+					driveClient.files.addEventListener(GoogleDriveEvent.FILE_INSERT, onUploadFileComplete);
+					driveClient.files.addEventListener(GoogleDriveEvent.UPLOAD_ERROR, onUploadFileError);
+					
+					var fileDrive:GoogleDriveFile = new GoogleDriveFile();
+					fileDrive.title = fileRef.name;
+					fileDrive.description = "Any description you need";
+					driveClient.files.file_insert(fileDrive, ba);
+					
+					
+				};
+				
+				fileRef.addEventListener(Event.SELECT, onFileRefSelect);
+				fileRef.browse();
+				
+			}
+			
+			protected function btn_update_clickHandler(event:MouseEvent):void
+			{
+				var file:File = new File();
+				
+				
+				
+				var onFileRefSelect:Function = function(e:Event){
+					var ba:ByteArray = new ByteArray();
+					var fileStream:FileStream = new FileStream();
+					fileStream.open(file,FileMode.READ);
+					fileStream.readBytes(ba);
+					fileStream.close();
+					//fileRef.load();
+					
+					trace("fileRef", ba.length);
+					
+					driveClient.files.addEventListener(GoogleDriveEvent.FILE_UPDATE, onUploadFileComplete);
+					driveClient.files.addEventListener(GoogleDriveEvent.UPLOAD_ERROR, onUploadFileError);
+					
+					var fileToUpdate:GoogleDriveFile = (list_files.selectedItem as GoogleDriveFile);
+					fileToUpdate.title = "New title updated" + uint(Math.random()*1000) + ".png";
+					
+					driveClient.files.file_update(fileToUpdate.id, fileToUpdate, ba);
+					//driveClient.files.updateFile(fileToUpdate); // if you don't want to update the content, don't pass the data
+					
+					
+				};
+				file.addEventListener(Event.CANCEL,function(){file.cancel()});
+				file.addEventListener(Event.SELECT, onFileRefSelect);
+				file.browse();
+			}
+			
+			protected function btn_patch_clickHandler(event:MouseEvent):void
+			{
+				
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_PATCH,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+					
+				var gdfile:GoogleDriveFile = (list_files.selectedItem as GoogleDriveFile);
+				gdfile.title = "New title patched" + uint(Math.random()*1000) + ".png";
+				
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_PATCH, handler);
+				driveClient.files.file_patch(gdfile.id, gdfile);
+				
+				
+			}
+			
+			protected function btn_copy_clickHandler(event:MouseEvent):void
+			{
+				
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_COPY,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				
+				var gdfile:GoogleDriveFile = (list_files.selectedItem as GoogleDriveFile);
+				
+				
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_COPY, handler);
+				driveClient.files.file_copy(gdfile.id);
+				
+				
+			}
+			
+			protected function onUploadFileComplete(event:GoogleDriveEvent):void
+			{
+				list_files.dataProvider = new ArrayCollection();
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+				driveClient.files.files_list();
+			}
+			
+			protected function onUploadFileError(event:GoogleDriveEvent):void
+			{
+				// TODO Auto-generated method stub
+			}
+			
+			protected function onListComplete(event:GoogleDriveEvent):void
+			{
+				driveClient.files.removeEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+				driveClient.files.removeEventListener(GoogleDriveEvent.FILE_ALL_LIST, onListComplete);
+				
+				this.list_files.labelField = "title";
+				this.list_files.dataProvider = new ArrayCollection((event.data as GoogleDriveFileList).items);
+			}
+			
+			protected function list_changeHandler(event:IndexChangeEvent):void
+			{
+				ta_file.text = ObjectUtil.toString(this.list_files.selectedItem);
+			}
+			
+			protected function btn_getmetadata_clickHandler(event:MouseEvent):void
+			{
+				ta_file.text = "";
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_METADATA,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_METADATA, handler);
+				driveClient.files.file_get((this.list_files.selectedItem as GoogleDriveFile).id, false);
+			}
+			
+			protected function btn_delete_clickHandler(event:MouseEvent):void
+			{
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_DELETE,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_DELETE,handler);
+				driveClient.files.file_delete((this.list_files.selectedItem as GoogleDriveFile).id);
+			}
+			
+			
+			
+			protected function btn_trash_clickHandler(event:MouseEvent):void
+			{
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_TRASH,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_TRASH,handler);
+				driveClient.files.file_trash((this.list_files.selectedItem as GoogleDriveFile).id);
+			}
+			
+			protected function btn_touch_clickHandler(event:MouseEvent):void
+			{
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_TOUCH,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_TOUCH,handler);
+				driveClient.files.file_touch((this.list_files.selectedItem as GoogleDriveFile).id);
+			}
+			
+			protected function btn_untrash_clickHandler(event:MouseEvent):void
+			{
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_UNTRASH,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_UNTRASH,handler);
+				driveClient.files.file_untrash((this.list_files.selectedItem as GoogleDriveFile).id);
+			}
+			
+			private var downloadedData:ByteArray;
+			
+			protected function btn_download_clickHandler(event:MouseEvent):void
+			{
+				
+				var onFileSelect:Function = function(ev:Event):void{
+					var fileStream:FileStream = new FileStream();
+					fileStream.open(ev.currentTarget as File,FileMode.WRITE);
+					fileStream.writeBytes(downloadedData);
+					fileStream.close();
+				}
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_DOWNLOAD,handler);
+					var file:File = File.desktopDirectory.resolvePath((list_files.selectedItem as GoogleDriveFile).title);
+					file.addEventListener(Event.SELECT,onFileSelect);
+					file.addEventListener(Event.CANCEL,function(){file.cancel()});
+					file.browseForSave("Save as...");
+					
+					downloadedData = e.data;
+				}
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_DOWNLOAD,handler);
+				driveClient.files.file_download((this.list_files.selectedItem as GoogleDriveFile));
+			}
+			
+			
+			
+			protected function btn_get_childrenlist_clickHandler(event:MouseEvent = null):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					list_children.labelField = "id";
+					list_children.dataProvider = new ArrayCollection((e.data as GoogleDriveChildrenList).items);
+				}
+				
+				this.list_children.dataProvider = new ArrayCollection();
+				driveClient.children.addEventListener(GoogleDriveEvent.CHILDREN_LIST, handler);
+				driveClient.children.children_list(this.ti_folder_id.text);
+				
+			}
+			
+			
+			
+			
+			
+			protected function btn_insert_folder_clickHandler(event:MouseEvent):void
+			{
+				var parentId:String = (this.list_files.selectedItem != null) ? this.list_files.selectedItem.id : "" ;
+				var folderName:String = "New folder " + Math.round(Math.random()*1000);
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.files.removeEventListener(GoogleDriveEvent.FOLDER_INSERT,handler);
+					ta_file.text = ObjectUtil.toString(e.data);
+					
+					list_files.dataProvider = new ArrayCollection();
+					if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+						driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+					}
+					driveClient.files.files_list();
+				}
+				
+				driveClient.files.addEventListener(GoogleDriveEvent.FOLDER_INSERT,handler);
+				driveClient.files.folder_create(folderName, parentId == "" ? null : [parentId]);
+				
+			}
+			
+			//// PARENTS /////
+			protected function btn_get_parents_list_clickHandler(event:MouseEvent = null):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					list_parents.labelField = "id";
+					list_parents.dataProvider = new ArrayCollection((e.data as GoogleDriveParentsList).items);
+				}
+				
+				this.list_parents.dataProvider = new ArrayCollection();
+				driveClient.parents.addEventListener(GoogleDriveEvent.PARENTS_LIST, handler);
+				driveClient.parents.parents_list(this.ti_parent_file_id.text);
+				
+			}
+			
+			//// END PARENTS ////
+			
+			
+			//// REVISIONS /////
+			protected function btn_get_revisions_list_clickHandler(event:MouseEvent = null):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					list_revisions.labelField = "id";
+					list_revisions.dataProvider = new ArrayCollection((e.data as GoogleDriveRevisionsList).items);
+					if (list_revisions.dataProvider.length == 0){
+						ta_revision.text = "Not found";
+					}
+				}
+				
+				this.list_revisions.dataProvider = new ArrayCollection();
+				driveClient.revisions.addEventListener(GoogleDriveEvent.REVISIONS_LIST, handler);
+				driveClient.revisions.revisions_list(this.ti_revisions_file_id.text);
+				
+			}
+			
+			//// END REVISIONS ////
+			
+			//// CHANGES /////
+			protected function btn_get_changes_list_clickHandler(event:MouseEvent = null):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					list_changes.labelField = "id";
+					list_changes.dataProvider = new ArrayCollection((e.data as GoogleDriveChangesList).items);
+					if (list_changes.dataProvider.length == 0){
+						ta_change.text = "Not found";
+					}
+				}
+				
+				this.list_changes.dataProvider = new ArrayCollection();
+				driveClient.changes.addEventListener(GoogleDriveEvent.CHANGES_LIST, handler);
+				driveClient.changes.change_list();
+				
+			}
+			
+			//// END CHANGES ////
+			
+			
+			//// PERMISSIONS /////
+			protected function btn_get_permissions_list_clickHandler(event:MouseEvent = null):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					list_permissions.labelField = "id";
+					list_permissions.dataProvider = new ArrayCollection((e.data as GoogleDrivePermissionsList).items);
+					if (list_permissions.dataProvider.length == 0){
+						ta_permission.text = "Not found";
+					}
+				}
+				
+				this.list_permissions.dataProvider = new ArrayCollection();
+				driveClient.permissions.addEventListener(GoogleDriveEvent.PERMISSIONS_LIST, handler);
+				driveClient.permissions.permissions_list(this.ti_permissions_file_id.text);
+				
+			}
+			
+			//// END PERMISSIONS ////
+			
+			protected function btn_about_get_clickHandler(event:MouseEvent):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.removeEventListener(GoogleDriveEvent.ABOUT_GET,handler);
+					ta_about.text = ObjectUtil.toString(e.data);
+				}
+				driveClient.addEventListener(GoogleDriveEvent.ABOUT_GET,handler);
+				driveClient.about_get();
+				
+			}
+			
+			protected function btn_apps_list_clickHandler(event:MouseEvent):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					driveClient.removeEventListener(GoogleDriveEvent.APPS_LIST,handler);
+					ta_about.text = ObjectUtil.toString(e.data);
+				}
+				driveClient.addEventListener(GoogleDriveEvent.APPS_LIST,handler);
+				driveClient.apps_list();
+				
+			}
+			
+			
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<s:TabBar dataProvider="{this.view_stack}" width="100%" />
+	
+	<mx:ViewStack id="view_stack" top="30" bottom="0" width="100%">
+		
+		<s:NavigatorContent label="Files" width="100%" height="100%">
+			
+		
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				<s:List width="40%" height="100%" id="list_files" labelField="title" change="list_changeHandler(event)" />
+				<s:VGroup width="20%">
+					<s:Label text="Files" />
+					<s:Button id="btn_get_list" label="Get List" click="btn_get_list_clickHandler(event)" width="100%" />
+					<s:Button id="btn_get_allfiles_list" label="Get All files" click="btn_get_all_files_list_clickHandler(event)" width="100%" />
+					<s:Button id="btn_upload" label="Upload..." click="btn_upload_clickHandler(event)" width="100%" />
+					<s:Button id="btn_insert_folder" label="Create new folder" click="btn_insert_folder_clickHandler(event)" width="100%" />
+					<s:Button id="btn_update" label="Update..." click="btn_update_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_patch" label="Patch..." click="btn_patch_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_copy" label="Copy" click="btn_copy_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_getmetadata" label="Get metadata" click="btn_getmetadata_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_delete" label="Delete" click="btn_delete_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_trash" label="Trash" click="btn_trash_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_touch" label="Touch" click="btn_touch_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_untrash" label="Untrash" click="btn_untrash_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_download" label="Download" click="btn_download_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+				</s:VGroup>
+				
+				<s:TextArea width="40%" height="100%" id="ta_file" />
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+		
+		
+		
+		
+		<s:NavigatorContent label="Children">
+			
+			
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				
+				<s:List width="40%" height="100%" id="list_children" labelField="title" change="{this.ta_child.text = ObjectUtil.toString(this.list_children.selectedItem)}" />
+				
+				<s:VGroup width="20%">
+					<s:Label text="Children" />
+					<s:TextInput id="ti_folder_id" prompt="folderId" />
+					<s:Button id="btn_get_childrenlist" label="Children list" click="btn_get_childrenlist_clickHandler(event)" width="100%" enabled="{this.ti_folder_id.text != ''}" />
+				</s:VGroup>
+				
+				<s:TextArea width="40%" height="100%" id="ta_child" />
+			
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+		
+		
+		<s:NavigatorContent label="Parents">
+			
+			
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				
+				<s:List width="40%" height="100%" id="list_parents" labelField="title" change="{this.ta_parent.text = ObjectUtil.toString(this.list_parents.selectedItem)}" />
+				
+				<s:VGroup width="20%">
+					<s:Label text="Children" />
+					<s:TextInput id="ti_parent_file_id" prompt="parent fileId" />
+					<s:Button id="btn_get_parent_list" label="Parents list" click="btn_get_parents_list_clickHandler(event)" width="100%" enabled="{this.ti_parent_file_id.text != ''}" />
+				</s:VGroup>
+				
+				<s:TextArea width="40%" height="100%" id="ta_parent" />
+				
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+
+		<s:NavigatorContent label="Revisions">
+			
+			
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				
+				<s:List width="40%" height="100%" id="list_revisions" labelField="title" change="{this.ta_revision.text = ObjectUtil.toString(this.list_revisions.selectedItem)}" />
+				
+				<s:VGroup width="20%">
+					<s:Label text="Revisions" />
+					<s:TextInput id="ti_revisions_file_id" prompt="fileId" />
+					<s:Button label="Revisions list" click="btn_get_revisions_list_clickHandler(event)" width="100%" enabled="{this.ti_revisions_file_id.text != ''}" />
+				</s:VGroup>
+				
+				<s:TextArea width="40%" height="100%" id="ta_revision" />
+				
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+		
+		<s:NavigatorContent label="Changes">
+			
+			
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				
+				<s:List width="40%" height="100%" id="list_changes" labelField="title" change="{this.ta_change.text = ObjectUtil.toString(this.list_changes.selectedItem)}" />
+				
+				<s:VGroup width="20%">
+					<s:Label text="Changes" />
+					
+					<s:Button label="Changes list" click="btn_get_changes_list_clickHandler(event)" width="100%" />
+				</s:VGroup>
+				
+				<s:TextArea width="40%" height="100%" id="ta_change" />
+				
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+		
+		<s:NavigatorContent label="Permissions">
+			
+			
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				
+				<s:List width="40%" height="100%" id="list_permissions" labelField="title" change="{this.ta_permission.text = ObjectUtil.toString(this.list_permissions.selectedItem)}" />
+				
+				<s:VGroup width="20%">
+					<s:Label text="Permissions" />
+					<s:TextInput id="ti_permissions_file_id" prompt="fileId" />
+					<s:Button label="Permissions list" click="btn_get_permissions_list_clickHandler(event)" enabled="{this.ti_permissions_file_id.text != ''}" width="100%" />
+				</s:VGroup>
+				
+				<s:TextArea width="40%" height="100%" id="ta_permission" />
+				
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+		
+		<s:NavigatorContent label="About">
+			
+			
+			<s:HGroup width="100%" height="100%" paddingBottom="10" paddingLeft="10" paddingRight="10" paddingTop="10">
+				
+				
+				<s:VGroup width="20%">
+					<s:Label text="About" />
+					<s:Button id="btn_about_get" label="About.get" click="btn_about_get_clickHandler(event)" width="100%" />
+					<s:Button id="btn_apps_list" label="Apps.list" click="btn_apps_list_clickHandler(event)" width="100%" />
+				</s:VGroup>
+				
+				<s:TextArea width="80%" height="100%" id="ta_about" />
+				
+			</s:HGroup>
+			
+		</s:NavigatorContent>
+		
+		
+		
+	</mx:ViewStack>
+	
+	
+	
+</s:WindowedApplication>
