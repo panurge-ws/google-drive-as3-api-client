@@ -2,6 +2,10 @@
 
 *Refer to the example .mxml in "src" folder to understand how the framework works.*
 
+==WARNING==
+When you register your app in the Google API Console, choose a "Web Application" type 
+with a valid (exiting) redirect url 
+
 See the docs contained in "docs" folder;
 
 = MInimal Setup =
