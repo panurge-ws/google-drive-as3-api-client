@@ -32,11 +32,12 @@ package com.panurge.google.drive.services
 	import com.panurge.google.IGoogleOAuth2;
 	import com.panurge.google.drive.events.GoogleDriveEvent;
 	import com.panurge.google.drive.model.GoogleDriveAbout;
+	
+	import flash.events.Event;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
 	import flash.utils.describeType;
 	import flash.utils.getQualifiedClassName;
-	import flash.events.Event;
 	
 	
 	/**
@@ -76,10 +77,21 @@ package com.panurge.google.drive.services
 	 * @version 0.0.1
 	 * 
 	 */
-	public class GoogleDriveClient extends GoogleServiceBase
+	public class GoogleDriveClient extends DriveServiceBase
 	{
 		
 		public static const MIMETYPE_GOOGLE_FOLDER:String = "application/vnd.google-apps.folder";
+		
+		
+		/**
+		 * if true, if you don't set any mimetype for the files upload, the API tries to autodetect the mimetypes.
+		 * WARNING: some text mimetypes return error in uploading ("text/plain", application/xml", etc). 
+		 * You can force these types to "text/html" to let Google Drive read them or simply to "application/octet-stream"
+		 * if you have no idea of which mimetype the file belongs to. 
+		 * If this variable is set to true, the API will automatically
+		 * force these types to allowed ones. 
+		 */
+		public static var auto_detect_mimetype:Boolean = true;
 		
 		/**
 		 * 
@@ -286,6 +298,12 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			
+			var objectResult:Object = this.parseResult(event);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
@@ -300,7 +318,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var about:GoogleDriveAbout = new GoogleDriveAbout();
-						about.cast(JSON.parse(urlLoader.data as String));
+						about.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType, about);
 					}
 					else{
@@ -313,7 +331,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						// retunr a generic Objecr 
-						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType, JSON.parse(urlLoader.data as String));
+						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType, objectResult);
 					}
 					else{
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType, null);
