@@ -41,7 +41,7 @@ package com.panurge.google.drive.services
 	import flash.net.URLVariables;
 
 	
-	public class Revisions extends GoogleServiceBase
+	public class Revisions extends DriveServiceBase
 	{
 		
 		public var driveClient:GoogleDriveClient;
@@ -107,6 +107,12 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			
+			var objectResult:Object = this.parseResult(event, driveClient);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
@@ -124,7 +130,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var revision:GoogleDriveRevision = new GoogleDriveRevision();
-						revision.cast(JSON.parse(urlLoader.data));
+						revision.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType, revision);
 					}
 					else{
@@ -138,7 +144,7 @@ package com.panurge.google.drive.services
 				{	
 					var revisionsList:GoogleDriveRevisionsList = new GoogleDriveRevisionsList();
 					try{
-						revisionsList.cast(JSON.parse(event.currentTarget.data as String));
+						revisionsList.cast(objectResult);
 					}
 					catch(e:Error){
 						trace(this, event.currentTarget.data, e.toString());

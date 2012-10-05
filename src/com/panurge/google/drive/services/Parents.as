@@ -27,19 +27,19 @@ package com.panurge.google.drive.services
 {
 	import com.adobe.net.DynamicURLLoader;
 	import com.panurge.google.GoogleServiceBase;
+	import com.panurge.google.IGoogleOAuth2;
 	import com.panurge.google.drive.events.GoogleDriveEvent;
+	import com.panurge.google.drive.model.GoogleDriveChild;
+	import com.panurge.google.drive.model.GoogleDriveChildrenList;
+	import com.panurge.google.drive.model.GoogleDriveParent;
+	import com.panurge.google.drive.model.GoogleDriveParentsList;
 	
 	import flash.events.Event;
 	import flash.net.URLRequestMethod;
 	import flash.net.URLVariables;
-	import com.panurge.google.IGoogleOAuth2;
-	import com.panurge.google.drive.model.GoogleDriveChild;
-	import com.panurge.google.drive.model.GoogleDriveChildrenList;
-	import com.panurge.google.drive.model.GoogleDriveParentsList;
-	import com.panurge.google.drive.model.GoogleDriveParent;
 
 	
-	public class Parents extends GoogleServiceBase
+	public class Parents extends DriveServiceBase
 	{
 		
 		public var driveClient:GoogleDriveClient;
@@ -104,12 +104,19 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			var objectResult:Object = this.parseResult(event, driveClient);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
 			trace("onLoadComplete", urlLoader.eventType, urlLoader);
 			
 			var eventToDispatch:GoogleDriveEvent;
+			
+			
 			
 			switch(urlLoader.eventType)
 			{
@@ -119,8 +126,9 @@ package com.panurge.google.drive.services
 				case GoogleDriveEvent.PARENT_INSERT:
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
+						trace(urlLoader.data);
 						var parent:GoogleDriveParent = new GoogleDriveParent();
-						parent.cast(JSON.parse(urlLoader.data as String));
+						parent.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType,parent);
 					}
 					else{
@@ -131,7 +139,7 @@ package com.panurge.google.drive.services
 				case GoogleDriveEvent.PARENTS_LIST:
 				{	
 					var parentsList:GoogleDriveParentsList = new GoogleDriveParentsList();
-					parentsList.cast(JSON.parse(urlLoader.data as String));
+					parentsList.cast(objectResult);
 					
 					eventToDispatch = new GoogleDriveEvent(GoogleDriveEvent.PARENTS_LIST, parentsList);
 					break;

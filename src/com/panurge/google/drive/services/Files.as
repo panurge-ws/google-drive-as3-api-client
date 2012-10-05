@@ -35,6 +35,7 @@ package com.panurge.google.drive.services
 	import com.panurge.google.drive.model.GoogleDriveFile;
 	import com.panurge.google.drive.model.GoogleDriveFileList;
 	import com.panurge.google.drive.model.GoogleDriveParent;
+	import com.panurge.google.net.MultipartURLLoader;
 	
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
@@ -48,8 +49,6 @@ package com.panurge.google.drive.services
 	
 	import mx.utils.ObjectUtil;
 	
-	import com.panurge.google.net.MultipartURLLoader;
-	
 	
 	/**
 	 *
@@ -60,7 +59,7 @@ package com.panurge.google.drive.services
 	 * @author panurge_ws
 	 * 
 	 */
-	public class Files extends GoogleServiceBase
+	public class Files extends DriveServiceBase
 	{
 		
 		public var driveClient:GoogleDriveClient;
@@ -168,15 +167,19 @@ package com.panurge.google.drive.services
 				m.urlMethod = URLRequestMethod.POST;
 				
 				// try to get the mimetype
-				if (file.mimeType == ""){
+				if (file.mimeType == "" && GoogleDriveClient.auto_detect_mimetype){
 					var mimeTypeMap:MimeTypeMap = new MimeTypeMap();
 					var ext:String = file.title.substr(file.title.lastIndexOf(".")+1, file.title.length);
 					file.mimeType = mimeTypeMap.getMimeType(ext);
 					file.mimeType = file.mimeType == null ? "application/octet-stream" : file.mimeType;
+					
+					// we have to be tricky, because some text or xml mimetypes return an error on upload
+					if (file.mimeType.indexOf("text") > -1 || file.mimeType.indexOf("xml") > -1){
+						file.mimeType = "text/html";
+					}
 				}
 				
-				
-				m.addFile(data, '', 'file', file.mimeType);
+				m.addFile(data, '', 'file', file.mimeType == "" ? "application/octet-stream" : file.mimeType);
 				
 				m.addEventListener(Event.COMPLETE, onInsertFileComplete);
 				m.addEventListener(IOErrorEvent.IO_ERROR, onUploadFileIOError); 
@@ -282,11 +285,16 @@ package com.panurge.google.drive.services
 				
 				
 				// try to get the mimetype
-				if (file.mimeType == ""){
+				if (file.mimeType == "" && GoogleDriveClient.auto_detect_mimetype){
 					var mimeTypeMap:MimeTypeMap = new MimeTypeMap();
 					var ext:String = file.title.substr(file.title.lastIndexOf(".")+1, file.title.length);
 					file.mimeType = mimeTypeMap.getMimeType(ext);
 					file.mimeType = file.mimeType == null ? "application/octet-stream" : file.mimeType;
+					
+					// we have to be tricky, because some text or xml mimetypes return an error on upload
+					if (file.mimeType.indexOf("text") > -1 || file.mimeType.indexOf("xml") > -1){
+						file.mimeType = "text/html";
+					}
 				}
 				
 				m.addFile(data, '', 'file', file.mimeType);
@@ -680,6 +688,11 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			var objectResult:Object = this.parseResult(event, driveClient);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
@@ -702,7 +715,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var file:GoogleDriveFile = new GoogleDriveFile();
-						file.cast(JSON.parse(urlLoader.data));
+						file.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType,file);
 					}
 					else{
@@ -711,8 +724,7 @@ package com.panurge.google.drive.services
 					
 					break;
 				}
-					
-					
+						
 				case GoogleDriveEvent.FILE_DOWNLOAD:
 				{	
 					eventToDispatch = new GoogleDriveEvent(GoogleDriveEvent.FILE_DOWNLOAD,urlLoader.data);
@@ -722,7 +734,7 @@ package com.panurge.google.drive.services
 				case GoogleDriveEvent.FILE_LIST_COMPLETE:
 				{	
 					var fileList:GoogleDriveFileList = new GoogleDriveFileList();
-					fileList.cast(JSON.parse(urlLoader.data as String));
+					fileList.cast(objectResult);
 					
 					eventToDispatch = new GoogleDriveEvent(GoogleDriveEvent.FILE_LIST_COMPLETE, fileList);
 					break;

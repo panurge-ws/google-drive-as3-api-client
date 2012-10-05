@@ -34,12 +34,13 @@
 				
 				// instantiates the OAuth2 setting
 				// see https://developers.google.com/drive/quickstart
+				// please register your app as a Website app in the Google API console
+				// with an existing redirect URL
 				oAuth = new GoogleOAuth2();
 				
 				oAuth.CLIENT_ID = "XXXXXXXXXXXXXX"
 				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
 				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
-				
 				
 				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 				
@@ -69,7 +70,13 @@
 			protected function onApiError(event:GoogleDriveEvent):void
 			{
 				if (event.data){
-					Alert.show("onAPIError\nerror code: " + event.data.code + "\nerror message: " + event.data.message);
+					if (event.data is String){
+						Alert.show("onAPIError\nerror code: " + event.data);
+						
+					}
+					else{
+						Alert.show("onAPIError\nerror code: " + event.data.code + "\nerror message: " + event.data.message);
+					}
 				}
 				else{
 					Alert.show("onAPIError\n: " + event.toString());
@@ -141,6 +148,8 @@
 					var fileDrive:GoogleDriveFile = new GoogleDriveFile();
 					fileDrive.title = fileRef.name;
 					fileDrive.description = "Any description you need";
+					// if you have erro in uploading text files, force the mimetype 
+					// fileDrive.mimeType = "application/octet-stream";
 					driveClient.files.file_insert(fileDrive, ba);
 					
 					

@@ -44,7 +44,7 @@ package com.panurge.google.drive.services
 	 * @see https://developers.google.com/drive/v2/reference/changes
 	 * 
 	 */
-	public class Changes extends GoogleServiceBase
+	public class Changes extends DriveServiceBase
 	{
 		
 		public var driveClient:GoogleDriveClient;
@@ -141,6 +141,11 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			var objectResult:Object = this.parseResult(event, driveClient);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
@@ -155,7 +160,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var change:GoogleDriveChange = new GoogleDriveChange();
-						change.cast(JSON.parse(urlLoader.data));
+						change.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType,change);
 					}
 					else{
@@ -168,7 +173,7 @@ package com.panurge.google.drive.services
 				case GoogleDriveEvent.CHANGES_LIST:
 				{	
 					var changesList:GoogleDriveChangesList = new GoogleDriveChangesList();
-					changesList.cast(JSON.parse(event.currentTarget.data as String));
+					changesList.cast(objectResult);
 					
 					eventToDispatch = new GoogleDriveEvent(GoogleDriveEvent.CHANGES_LIST, changesList);
 					break;

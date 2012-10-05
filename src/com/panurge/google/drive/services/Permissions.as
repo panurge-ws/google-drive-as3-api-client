@@ -44,7 +44,7 @@ package com.panurge.google.drive.services
 	 * @author aboschini
 	 * 
 	 */
-	public class Permissions extends GoogleServiceBase
+	public class Permissions extends DriveServiceBase
 	{
 		
 		public var driveClient:GoogleDriveClient;
@@ -187,6 +187,12 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			
+			var objectResult:Object = this.parseResult(event, driveClient);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
@@ -205,7 +211,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var permission:GoogleDrivePermission = new GoogleDrivePermission();
-						permission.cast(JSON.parse(urlLoader.data));
+						permission.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType,permission);
 					}
 					else{
@@ -219,7 +225,7 @@ package com.panurge.google.drive.services
 				{	
 					var permissionsList:GoogleDrivePermissionsList = new GoogleDrivePermissionsList();
 					try{
-						permissionsList.cast(JSON.parse(event.currentTarget.data as String));
+						permissionsList.cast(objectResult);
 					}
 					catch(e:Error){
 						trace(this, event.currentTarget.data);

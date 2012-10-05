@@ -37,7 +37,7 @@ package com.panurge.google.drive.services
 	import com.panurge.google.drive.model.GoogleDriveChildrenList;
 
 	
-	public class Children extends GoogleServiceBase
+	public class Children extends DriveServiceBase
 	{
 		
 		public var driveClient:GoogleDriveClient;
@@ -125,6 +125,11 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
+			var objectResult:Object = this.parseResult(event, driveClient);
+			// we got an error
+			if (objectResult == null)
+				return;
+			
 			var urlLoader:* = event.currentTarget;
 			removeListeners(urlLoader);
 			
@@ -141,7 +146,7 @@ package com.panurge.google.drive.services
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var child:GoogleDriveChild = new GoogleDriveChild();
-						child.cast(JSON.parse(urlLoader.data as String));
+						child.cast(objectResult);
 						eventToDispatch = new GoogleDriveEvent(urlLoader.eventType,child);
 					}
 					else{
@@ -152,7 +157,7 @@ package com.panurge.google.drive.services
 				case GoogleDriveEvent.CHILDREN_LIST:
 				{	
 					var childrenList:GoogleDriveChildrenList = new GoogleDriveChildrenList();
-					childrenList.cast(JSON.parse(urlLoader.data as String));
+					childrenList.cast(objectResult);
 					
 					eventToDispatch = new GoogleDriveEvent(GoogleDriveEvent.CHILDREN_LIST, childrenList);
 					break;

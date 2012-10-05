@@ -303,7 +303,7 @@ package com.panurge.google.net
 			
 			addListener();
 			
-			trace("dosend", ObjectUtil.toString(urlRequest));
+			//trace("dosend", ObjectUtil.toString(urlRequest));
 			
 			_loader.load(urlRequest);
 		}
