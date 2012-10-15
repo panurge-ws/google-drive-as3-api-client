@@ -52,15 +52,24 @@ package com.panurge.google.drive.services
 			super(oauth);
 		}
 		
-		/*
-		Required Parameters
-		fileId	string	 The ID for the file.
 		
-		*/
 			
-		public function revisions_list(fileId:String = ""):DynamicURLLoader
-		{			
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/revisions", URLRequestMethod.GET, GoogleDriveEvent.REVISIONS_LIST);
+		/**
+		 * 
+		 * @param fileId
+		 * @param fields Selector specifying which fields to include in a partial response.
+		 * @return 
+		 * 
+		 */
+		public function revisions_list(fileId:String = "", fields:String = ""):DynamicURLLoader
+		{	
+			var urlVar:URLVariables = new  URLVariables();
+			
+			if (fields != ""){
+				urlVar.fields = fields;
+			}
+			
+			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/revisions", URLRequestMethod.GET, GoogleDriveEvent.REVISIONS_LIST, urlVar);
 			
 		}
 		

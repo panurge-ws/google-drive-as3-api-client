@@ -147,6 +147,7 @@ package com.panurge.google.drive.services
 			optParams.timedTextTrackName = timedTextTrackName;
 			
 			if (data == null){
+				
 				return callService(	"https://www.googleapis.com/drive/v2/files",
 					URLRequestMethod.POST,
 					GoogleDriveEvent.FILE_INSERT,
@@ -484,11 +485,12 @@ package com.panurge.google.drive.services
 		 * @param maxResults Maximum number of files to return.
 		 * @param pageToken Page token for files.
 		 * @param q Query string for searching files. See Searching for files (https://developers.google.com/drive/search-parameters) for more information about supported fields and operations.
+		 * @param fields Selector specifying which fields to include in a partial response.
 		 * @return 
 		 * 
 		 * @see https://developers.google.com/drive/search-parameters
 		 */
-		public function files_list(maxResults:int = -1, pageToken:String = "", q:String = ""):DynamicURLLoader
+		public function files_list(maxResults:int = -1, pageToken:String = "", q:String = "", fields:String = ""):DynamicURLLoader
 		{
 			
 			var urlVar:URLVariables = new  URLVariables();
@@ -501,6 +503,9 @@ package com.panurge.google.drive.services
 			}
 			if (q != ""){
 				urlVar.q = q;
+			}
+			if (fields != ""){
+				urlVar.fields = fields;
 			}
 			
 			return callService("https://www.googleapis.com/drive/v2/files/", URLRequestMethod.GET, GoogleDriveEvent.FILE_LIST_COMPLETE, urlVar);
@@ -517,10 +522,11 @@ package com.panurge.google.drive.services
 		 *  
 		 * @param pageToken Page token for files.
 		 * @param q Query string for searching files. See Searching for files (https://developers.google.com/drive/search-parameters) for more information about supported fields and operations.
+		 * @param fields Selector specifying which fields to include in a partial response.
 		 * @return  
 		 * 
 		 */
-		public function files_all_list(pageToken:String = "", q:String = ""):DynamicURLLoader
+		public function files_all_list(pageToken:String = "", q:String = "", fields:String = ""):DynamicURLLoader
 		{
 			
 			var urlVar:URLVariables = new  URLVariables();
@@ -529,6 +535,9 @@ package com.panurge.google.drive.services
 			}
 			if (pageToken != ""){
 				urlVar.pageToken = pageToken;
+			}
+			if (fields != ""){
+				urlVar.fields = fields;
 			}
 			
 			if (pageToken == ""){
@@ -542,7 +551,7 @@ package com.panurge.google.drive.services
 				allFiles = allFiles.concat(fileList.items);
 				
 				if (fileList.nextPageToken != ""){
-					files_all_list(fileList.nextPageToken, q);
+					files_all_list(fileList.nextPageToken, q, fields);
 				}
 				else{
 					fileList.items = allFiles;	

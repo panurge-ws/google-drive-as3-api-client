@@ -33,7 +33,7 @@ package com.panurge.google.drive.model
 	 * 
 	 * @see https://developers.google.com/drive/v2/reference/changes/list
 	 */
-	public class GoogleDriveChangesList extends GoogleDriveFileList
+	dynamic public class GoogleDriveChangesList extends GoogleDriveFileList
 	{
 		
 		/**

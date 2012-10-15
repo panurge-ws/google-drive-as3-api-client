@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package com.panurge.google.drive.model
 {
-	public class GoogleDriveRevision extends GoogleDriveModelBase
+	dynamic public class GoogleDriveRevision extends GoogleDriveModelBase
 	{
 		
 			

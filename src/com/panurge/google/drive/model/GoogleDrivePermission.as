@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package com.panurge.google.drive.model
 {
-	public class GoogleDrivePermission extends GoogleDriveModelBase
+	dynamic public class GoogleDrivePermission extends GoogleDriveModelBase
 	{
 		
 		public var kind:String = ""; //	string	This is always drive#permission.	

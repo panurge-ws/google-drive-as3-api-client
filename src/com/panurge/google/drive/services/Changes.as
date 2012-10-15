@@ -63,10 +63,11 @@ package com.panurge.google.drive.services
 		 * @param maxResults Maximum number of changes to return.
 		 * @param pageToken Page token for changes.
 		 * @param startChangeId Change ID to start listing changes from.
+		 * @param fields Selector specifying which fields to include in a partial response.
 		 * @return 
 		 * 
 		 */
-		public function change_list(includeDeleted:Boolean = false, includeSubscribed:Boolean = false, maxResults:int = -1, pageToken:String = "", startChangeId:Number = -1):DynamicURLLoader
+		public function change_list(includeDeleted:Boolean = false, includeSubscribed:Boolean = false, maxResults:int = -1, pageToken:String = "", startChangeId:Number = -1, fields:String = ""):DynamicURLLoader
 		{
 			
 			var urlVar:URLVariables = new  URLVariables();
@@ -83,18 +84,15 @@ package com.panurge.google.drive.services
 			if (startChangeId != -1){
 				urlVar.startChangeId = startChangeId;
 			}
+			if (fields != ""){
+				urlVar.fields = fields;
+			}
 			
 			return callService("https://www.googleapis.com/drive/v2/changes", URLRequestMethod.GET, GoogleDriveEvent.CHANGES_LIST, urlVar);
 			
 		}
 		
-		/*Optional Parameters
-			includeDeleted	boolean	 Whether to include deleted items.
-			includeSubscribed	boolean	 Whether to include subscribed items.
-			
-			pageToken	string	 Page token for changes.
-			startChangeId	unsigned long	 Change ID to start listing changes from.
-		*/
+		
 		private var allChanges:Array = [];
 		public function change_all_list(includeDeleted:Boolean = false, includeSubscribed:Boolean = false, pageToken:String = "", startChangeId:Number = -1):DynamicURLLoader
 		{

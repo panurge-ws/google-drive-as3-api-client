@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package com.panurge.google.drive.model
 {
-	public class GoogleDriveChildrenList extends GoogleDriveFileList
+	dynamic public class GoogleDriveChildrenList extends GoogleDriveFileList
 	{
 			
 		// 	list	The actual list of children.

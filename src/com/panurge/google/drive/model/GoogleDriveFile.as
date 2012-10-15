@@ -26,7 +26,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package com.panurge.google.drive.model
 {
 	
-	public class GoogleDriveFile extends GoogleDriveModelBase
+	dynamic public class GoogleDriveFile extends GoogleDriveModelBase
 	{
 		
 		/**
@@ -205,9 +205,14 @@ package com.panurge.google.drive.model
 				_parents = [];
 				for (var i:int = 0; i < value.length; i++) 
 				{
-					var gParent:GoogleDriveParent = new GoogleDriveParent();
-					gParent.cast(value[i]);
-					_parents.push(gParent);
+					if (value[i] is GoogleDriveParent){
+						_parents.push(value[i]);
+					}
+					else{
+						var gParent:GoogleDriveParent = new GoogleDriveParent();
+						gParent.cast(value[i]);
+						_parents.push(gParent);
+					}
 				}
 				
 			}

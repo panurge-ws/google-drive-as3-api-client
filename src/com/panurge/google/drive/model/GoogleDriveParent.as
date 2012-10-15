@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package com.panurge.google.drive.model
 {
-	public class GoogleDriveParent extends GoogleDriveModelBase
+	dynamic public class GoogleDriveParent extends GoogleDriveModelBase
 	{
 		public var kind:String = ""; //	string	This is always drive#parentReference.	
 		public var id:String = ""; //	string	The ID of the parent.	

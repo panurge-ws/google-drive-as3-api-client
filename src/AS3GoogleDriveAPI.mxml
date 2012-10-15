@@ -11,10 +11,14 @@
 			import com.panurge.google.drive.model.GoogleDriveChildrenList;
 			import com.panurge.google.drive.model.GoogleDriveFile;
 			import com.panurge.google.drive.model.GoogleDriveFileList;
+			import com.panurge.google.drive.model.GoogleDriveParent;
 			import com.panurge.google.drive.model.GoogleDriveParentsList;
 			import com.panurge.google.drive.model.GoogleDrivePermissionsList;
 			import com.panurge.google.drive.model.GoogleDriveRevisionsList;
 			import com.panurge.google.drive.services.GoogleDriveClient;
+			import com.panurge.google.drive.services.Parents;
+			
+			import flash.utils.clearTimeout;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
@@ -34,13 +38,15 @@
 				
 				// instantiates the OAuth2 setting
 				// see https://developers.google.com/drive/quickstart
-				// please register your app as a Website app in the Google API console
-				// with an existing redirect URL
+				// please register your app as a Web Application app in the Google API console
+				// with a valid (exixting) redirect URL
 				oAuth = new GoogleOAuth2();
 				
 				oAuth.CLIENT_ID = "XXXXXXXXXXXXXX"
 				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
 				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
+				
+				
 				
 				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 				
@@ -62,7 +68,7 @@
 				oAuth.addEventListener(GoogleOAuth2Event.AUTH_REQUEST_INIT, onAuthRequestInit);
 				oAuth.addEventListener(GoogleOAuth2Event.AUTH_FAULT, onAuthFault);
 				oAuth.addEventListener(GoogleOAuth2Event.AUTH_SUCCESS, onAuthSuccess);
-				
+					
 				oAuth.init();
 			
 			}
@@ -88,15 +94,52 @@
 				Alert.show("onAuthFault\nerror code: " + event.code + "\nerror message: " + event.message);
 			}
 			
+			private var delayStageWebViewID:uint;
+			
 			protected function onAuthRequestInit(GoogleOAuth2Event:Event):void
 			{
-				// we have to display stage web view NOW!
-				stageWebView.viewPort = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
-				stageWebView.stage = stage;
+				
+				trace("onAuthRequestInit");
+				// we have access_token, but we haven't refreshToken: 
+				// this shouldn't happen, but anyway we can have another change to authenticate without any valid refreshToken, having a valid access_token
+				if (oAuth.accessToken != "" && (oAuth.refreshToken == "" || oAuth.refreshToken == null)){
+					
+					stageWebView.addEventListener(LocationChangeEvent.LOCATION_CHANGING, onLocationChanging);
+					stageWebView.addEventListener(LocationChangeEvent.LOCATION_CHANGE, onLocationChanging);
+					
+					clearTimeout(delayStageWebViewID);
+					delayStageWebViewID = setTimeout(function(){
+						trace("Timeout, no URL redirect detected, we need the stageWebView, to grant the app");
+						stageWebView.viewPort = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
+						stageWebView.stage = stage;
+					}, 2000); // or time you need
+						
+					function onLocationChanging(locationChangeEvent:LocationChangeEvent):void
+					{
+						if (locationChangeEvent.location.indexOf(oAuth.REDIRECT_URI) == 0)
+						{
+							stageWebView.removeEventListener(LocationChangeEvent.LOCATION_CHANGING, onLocationChanging);
+							stageWebView.removeEventListener(LocationChangeEvent.LOCATION_CHANGE, onLocationChanging);
+							
+							trace("success in AUTH so we can cancel the stagewebview timeout");
+							clearTimeout(delayStageWebViewID);
+							// onAuthSuccess we'll dispose the stageWebView
+						}
+					}
+				}
+				else{
+					// display directly the html page to let the user grant the app
+					stageWebView.viewPort = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
+					stageWebView.stage = stage;
+				}
+				
 			}
 			
 			protected function onAuthSuccess(event:GoogleOAuth2Event):void
 			{
+				
+				clearTimeout(delayStageWebViewID);
+				
 				oAuth.removeEventListener(GoogleOAuth2Event.AUTH_SUCCESS, onAuthSuccess);
 				
 				// the auth was succefull so we can dispose the stageWebView
@@ -105,7 +148,8 @@
 				
 				// caldriveClient.files.files_list to populate the list of files
 				driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
-				driveClient.files.files_list();
+				driveClient.files.files_list(-1, '', "", "items(description,id,parents,title)"); // to restrict to only specific some fields
+				//driveClient.files.files_list();
 			}
 			
 			protected function btn_get_list_clickHandler(event:MouseEvent):void
@@ -150,6 +194,10 @@
 					fileDrive.description = "Any description you need";
 					// if you have erro in uploading text files, force the mimetype 
 					// fileDrive.mimeType = "application/octet-stream";
+					var parent:GoogleDriveParent = new GoogleDriveParent();
+					parent.id = "0B1HspwNNGa2QcTVmQm1JVlBieXc";
+					fileDrive.parents = [parent];
+					
 					driveClient.files.file_insert(fileDrive, ba);
 					
 					
@@ -409,7 +457,7 @@
 					driveClient.files.files_list();
 				}
 				
-				driveClient.files.addEventListener(GoogleDriveEvent.FOLDER_INSERT,handler);
+				driveClient.files.addEventListener(GoogleDriveEvent.FOLDER_INSERT, handler);
 				driveClient.files.folder_create(folderName, parentId == "" ? null : [parentId]);
 				
 			}

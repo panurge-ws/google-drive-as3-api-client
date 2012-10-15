@@ -31,7 +31,7 @@ package com.panurge.google.drive.model
 	 * @author
 	 * 
 	 */
-	public class GoogleDriveFileList extends GoogleDriveModelBase
+	dynamic public class GoogleDriveFileList extends GoogleDriveModelBase
 	{
 		
 		/**
