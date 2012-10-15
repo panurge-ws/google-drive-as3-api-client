@@ -31,7 +31,7 @@ package com.panurge.google.drive.model
 	 * 
 	 * @see https://developers.google.com/drive/v2/reference/changes
 	 */
-	public class GoogleDriveChange extends GoogleDriveModelBase
+	dynamic public class GoogleDriveChange extends GoogleDriveModelBase
 	{
 		
 		/**

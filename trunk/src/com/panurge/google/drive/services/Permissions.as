@@ -34,6 +34,7 @@ package com.panurge.google.drive.services
 	
 	import flash.events.Event;
 	import flash.net.URLRequestMethod;
+	import flash.net.URLVariables;
 
 	
 	/**
@@ -64,12 +65,19 @@ package com.panurge.google.drive.services
 		/**
 		 * Lists a file's permissions. 
 		 * @param fileId The ID for the file.
+		 * @param fields Selector specifying which fields to include in a partial response.
 		 * @return 
 		 * 
 		 */
-		public function permissions_list(fileId:String = ""):DynamicURLLoader
-		{			
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/permissions", URLRequestMethod.GET, GoogleDriveEvent.PERMISSIONS_LIST);
+		public function permissions_list(fileId:String = "", fields:String = ""):DynamicURLLoader
+		{	
+			var urlVar:URLVariables = new  URLVariables();
+			
+			if (fields != ""){
+				urlVar.fields = fields;
+			}
+			
+			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/permissions", URLRequestMethod.GET, GoogleDriveEvent.PERMISSIONS_LIST, urlVar);
 			
 		}
 		

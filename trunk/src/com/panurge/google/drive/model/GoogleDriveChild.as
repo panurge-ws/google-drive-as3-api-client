@@ -31,7 +31,7 @@ package com.panurge.google.drive.model
 	 * 
 	 * @see https://developers.google.com/drive/v2/reference/children
 	 */
-	public class GoogleDriveChild extends GoogleDriveModelBase
+	dynamic public class GoogleDriveChild extends GoogleDriveModelBase
 	{
 		public var kind:String = ""; //	string	This is always drive#childReference.	
 		public var id:String = ""; //	string	The ID of the child.	

@@ -53,12 +53,18 @@ package com.panurge.google.drive.services
 		/**
 		 * 
 		 * @param fileId
+		 * @param fields Selector specifying which fields to include in a partial response.
 		 * @return 
 		 * 
 		 */
-		public function parents_list(fileId:String):DynamicURLLoader
+		public function parents_list(fileId:String, fields:String = ""):DynamicURLLoader
 		{	
-			return callService("https://www.googleapis.com/drive/v2/files/" + fileId + "/parents", URLRequestMethod.GET, GoogleDriveEvent.PARENTS_LIST)	
+			var urlVar:URLVariables = new  URLVariables();
+			
+			if (fields != ""){
+				urlVar.fields = fields;
+			}
+			return callService("https://www.googleapis.com/drive/v2/files/" + fileId + "/parents", URLRequestMethod.GET, GoogleDriveEvent.PARENTS_LIST, urlVar)	
 		}
 		
 		/**

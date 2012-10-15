@@ -144,11 +144,11 @@ package com.panurge.google
 		 */
 		public function init():void
 		{
-			if (manageSession && !GoogleOAuth2Settings.loaded){
-				GoogleOAuth2Settings.load();
-				accessToken = GoogleOAuth2Settings.accessToken;
-				refreshToken = GoogleOAuth2Settings.refreshToken;
-				tokenExpireTime = GoogleOAuth2Settings.tokenExpireTime;
+			if (manageSession) {
+				if(!GoogleOAuth2Settings.loaded) GoogleOAuth2Settings.load();
+				accessToken = accessToken == "" ? GoogleOAuth2Settings.accessToken : accessToken;
+				refreshToken = refreshToken == "" ? GoogleOAuth2Settings.refreshToken : refreshToken;
+				tokenExpireTime = tokenExpireTime == -1 ? GoogleOAuth2Settings.tokenExpireTime : tokenExpireTime;
 			}
 			
 			if (accessToken == "" || refreshToken == "" || refreshToken == null){
@@ -177,7 +177,7 @@ package com.panurge.google
 				"INSERT_STATE_HERE");// (optional) your state
 			
 			// make the call
-			dispatchEvent(new GoogleOAuth2Event(GoogleOAuth2Event.AUTH_REQUEST_INIT)); 
+			dispatchEvent(new GoogleOAuth2Event(GoogleOAuth2Event.AUTH_REQUEST_INIT));
 			
 			oauth2.addEventListener(GetAccessTokenEvent.TYPE, onGetAccessToken);
 			oauth2.getAccessToken(grant);
@@ -210,6 +210,8 @@ package com.panurge.google
 			}
 			else
 			{
+				
+				
 				dispatchEvent(new GoogleOAuth2Event(GoogleOAuth2Event.AUTH_REQUEST_FAULT, getAccessTokenEvent.errorCode, getAccessTokenEvent.errorMessage)); 
 				dispatchEvent(new GoogleOAuth2Event(GoogleOAuth2Event.AUTH_FAULT, getAccessTokenEvent.errorCode, getAccessTokenEvent.errorMessage)); 
 			}
@@ -249,7 +251,7 @@ package com.panurge.google
 		protected function onRefreshTokenSuccess(event:RefreshAccessTokenEvent):void
 		{
 			
-			//trace(ObjectUtil.toString(event));
+			trace("onRefreshTokenSuccess", ObjectUtil.toString(event));
 			
 			if (event.errorCode == null && event.errorMessage == null)
 			{

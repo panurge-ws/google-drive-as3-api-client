@@ -31,7 +31,7 @@ package com.panurge.google.drive.model
 	 * 
 	 * @see https://developers.google.com/drive/v2/reference/about
 	 */
-	public class GoogleDriveAbout extends GoogleDriveModelBase
+	dynamic public class GoogleDriveAbout extends GoogleDriveModelBase
 	{
 		
 		public var kind:String = ""; //	string	This is always drive#about.	
@@ -64,6 +64,7 @@ package com.panurge.google.drive.model
 				//maxUploadSizes[].size	long	The max upload size for this type.	
 		public var permissionId:String = ""; // string	The current user's ID as visible in the permissions collection.	
 		public var isCurrentAppInstalled:Boolean = false; //	boolean	A boolean indicating whether the authenticated app is installed by the authenticated user.
+		public var quotaBytesUsedAggregate:Number = -1; //	long
 				
 				
 		public function GoogleDriveAbout()

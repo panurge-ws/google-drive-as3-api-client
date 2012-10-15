@@ -56,10 +56,11 @@ package com.panurge.google.drive.services
 		 * @param maxResults integer	 Maximum number of children to return.
 		 * @param pageToken string	 Page token for children.
 		 * @param q string	 Query string for searching children.
+		 * @param fields Selector specifying which fields to include in a partial response.
 		 * @return 
 		 * 
 		 */
-		public function children_list(folderId:String, maxResults:int = -1, pageToken:String = "", q:String = ""):DynamicURLLoader
+		public function children_list(folderId:String, maxResults:int = -1, pageToken:String = "", q:String = "", fields:String = ""):DynamicURLLoader
 		{
 			
 			var urlVar:URLVariables = new  URLVariables();
@@ -71,6 +72,9 @@ package com.panurge.google.drive.services
 			}
 			if (q != ""){
 				urlVar.q = q;
+			}
+			if (fields != ""){
+				urlVar.fields = fields;
 			}
 			
 			return callService("https://www.googleapis.com/drive/v2/files/" + folderId + "/children", URLRequestMethod.GET, GoogleDriveEvent.CHILDREN_LIST, urlVar);
