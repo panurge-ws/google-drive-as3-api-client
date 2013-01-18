@@ -69,13 +69,13 @@ package com.panurge.google.drive.services
 				urlVar.fields = fields;
 			}
 			
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/revisions", URLRequestMethod.GET, GoogleDriveEvent.REVISIONS_LIST, urlVar);
+			return callService("https://www.googleapis.com/drive/v2/files/"+fileId+"/revisions", URLRequestMethod.GET, GoogleDriveEvent.REVISIONS_LIST, urlVar);
 			
 		}
 		
 		public function revisions_get(fileId:String, revisionId:String):DynamicURLLoader
 		{
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/revisions/" + revisionId, URLRequestMethod.GET, GoogleDriveEvent.REVISIONS_GET);
+			return callService("https://www.googleapis.com/drive/v2/files/"+fileId+"/revisions/" + revisionId, URLRequestMethod.GET, GoogleDriveEvent.REVISIONS_GET);
 		}
 		
 		/*
@@ -90,7 +90,7 @@ package com.panurge.google.drive.services
 		public function revisions_update(fileId:String, revisionId:String, revision:GoogleDriveRevision):DynamicURLLoader
 		{
 			
-			return callService(	"https://www.googleapis.com/drive/v2/"+fileId+"/revisions/" + revisionId, 
+			return callService(	"https://www.googleapis.com/drive/v2/files/"+fileId+"/revisions/" + revisionId, 
 								URLRequestMethod.PUT, 
 								GoogleDriveEvent.REVISIONS_UPDATE,
 								JSON.stringify(buildParams(revision)),
@@ -99,13 +99,13 @@ package com.panurge.google.drive.services
 		
 		public function revisions_delete(fileId:String, revisionId:String):DynamicURLLoader
 		{
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/revisions/" + revisionId, URLRequestMethod.DELETE, GoogleDriveEvent.REVISIONS_DELETE);
+			return callService("https://www.googleapis.com/drive/v2/files/"+fileId+"/revisions/" + revisionId, URLRequestMethod.DELETE, GoogleDriveEvent.REVISIONS_DELETE);
 		}
 		
 		public function revisions_patch(fileId:String, revisionId:String, revision:GoogleDriveRevision):DynamicURLLoader
 		{
 			
-			return callService(	"https://www.googleapis.com/drive/v2/" + fileId + "/revisions/" + revisionId, 
+			return callService(	"https://www.googleapis.com/drive/v2/files/" + fileId + "/revisions/" + revisionId, 
 				"PATCH", 
 				GoogleDriveEvent.REVISIONS_PATCH,
 				JSON.stringify(buildParams(revision)),
