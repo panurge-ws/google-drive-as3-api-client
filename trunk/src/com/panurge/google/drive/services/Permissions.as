@@ -77,7 +77,7 @@ package com.panurge.google.drive.services
 				urlVar.fields = fields;
 			}
 			
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/permissions", URLRequestMethod.GET, GoogleDriveEvent.PERMISSIONS_LIST, urlVar);
+			return callService("https://www.googleapis.com/drive/v2/files/"+fileId+"/permissions", URLRequestMethod.GET, GoogleDriveEvent.PERMISSIONS_LIST, urlVar);
 			
 		}
 		
@@ -90,7 +90,7 @@ package com.panurge.google.drive.services
 		 */
 		public function permissions_get(fileId:String, permissionId:String):DynamicURLLoader
 		{
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/permissions/" + permissionId, URLRequestMethod.GET, GoogleDriveEvent.PERMISSIONS_GET);
+			return callService("https://www.googleapis.com/drive/v2/files/"+fileId+"/permissions/" + permissionId, URLRequestMethod.GET, GoogleDriveEvent.PERMISSIONS_GET);
 		}
 		
 		/**
@@ -104,7 +104,7 @@ package com.panurge.google.drive.services
 		public function permissions_update(fileId:String, permissionId:String, permission:GoogleDrivePermission):DynamicURLLoader
 		{
 			
-			return callService(	"https://www.googleapis.com/drive/v2/"+fileId+"/permissions/" + permissionId, 
+			return callService(	"https://www.googleapis.com/drive/v2/files/"+fileId+"/permissions/" + permissionId, 
 								URLRequestMethod.PUT, 
 								GoogleDriveEvent.PERMISSIONS_UPDATE,
 								JSON.stringify(buildParams(permission)),
@@ -120,7 +120,7 @@ package com.panurge.google.drive.services
 		 */
 		public function permissions_delete(fileId:String, permissionId:String):DynamicURLLoader
 		{
-			return callService("https://www.googleapis.com/drive/v2/"+fileId+"/permissions/" + permissionId, URLRequestMethod.DELETE, GoogleDriveEvent.PERMISSIONS_DELETE);
+			return callService("https://www.googleapis.com/drive/v2/files/"+fileId+"/permissions/" + permissionId, URLRequestMethod.DELETE, GoogleDriveEvent.PERMISSIONS_DELETE);
 		}
 		
 		/*
@@ -186,7 +186,7 @@ package com.panurge.google.drive.services
 				// TODO dispatch event required parameters error
 			}
 			
-			return callService(	"https://www.googleapis.com/drive/v2/"+fileId+"/permissions", 
+			return callService(	"https://www.googleapis.com/drive/v2/files/"+fileId+"/permissions", 
 				URLRequestMethod.POST, 
 				GoogleDriveEvent.PERMISSIONS_UPDATE,
 				JSON.stringify(buildParams(permission,optParams)),
