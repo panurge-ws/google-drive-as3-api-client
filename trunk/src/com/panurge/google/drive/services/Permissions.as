@@ -188,7 +188,7 @@ package com.panurge.google.drive.services
 			
 			return callService(	"https://www.googleapis.com/drive/v2/files/"+fileId+"/permissions", 
 				URLRequestMethod.POST, 
-				GoogleDriveEvent.PERMISSIONS_UPDATE,
+				GoogleDriveEvent.PERMISSIONS_INSERT,
 				JSON.stringify(buildParams(permission,optParams)),
 				"application/json");
 		}
