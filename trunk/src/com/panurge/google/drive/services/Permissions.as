@@ -216,6 +216,7 @@ package com.panurge.google.drive.services
 				case GoogleDriveEvent.PERMISSIONS_INSERT:
 				case GoogleDriveEvent.PERMISSIONS_PATCH:
 				case GoogleDriveEvent.PERMISSIONS_DELETE:
+				case GoogleDriveEvent.PERMISSIONS_UPDATE:
 				{	
 					if (urlLoader.data != null && urlLoader.data != ""){
 						var permission:GoogleDrivePermission = new GoogleDrivePermission();

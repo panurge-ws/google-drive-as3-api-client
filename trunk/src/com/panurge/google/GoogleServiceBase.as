@@ -104,6 +104,8 @@ package com.panurge.google
 			
 			urlLoader.load(request);
 			
+			trace("callService", ObjectUtil.toString(request));
+			
 			return urlLoader;
 			
 		}

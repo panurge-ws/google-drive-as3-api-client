@@ -296,7 +296,7 @@ package com.panurge.google
 			urlReq.requestHeaders.push(getAuthURLRequestHeader());
 			urlReq.method = method;
 			
-			trace("getAuthURLRequest", ObjectUtil.toString(urlReq.requestHeaders));
+			//trace("getAuthURLRequest", ObjectUtil.toString(urlReq.requestHeaders));
 			
 			return urlReq;
 		}

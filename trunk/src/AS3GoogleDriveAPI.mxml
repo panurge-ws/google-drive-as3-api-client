@@ -13,6 +13,7 @@
 			import com.panurge.google.drive.model.GoogleDriveFileList;
 			import com.panurge.google.drive.model.GoogleDriveParent;
 			import com.panurge.google.drive.model.GoogleDriveParentsList;
+			import com.panurge.google.drive.model.GoogleDrivePermission;
 			import com.panurge.google.drive.model.GoogleDrivePermissionsList;
 			import com.panurge.google.drive.model.GoogleDriveRevisionsList;
 			import com.panurge.google.drive.services.GoogleDriveClient;
@@ -39,15 +40,14 @@
 				// instantiates the OAuth2 setting
 				// see https://developers.google.com/drive/quickstart
 				// please register your app as a Web Application app in the Google API console
-				// with a valid (exixting) redirect URL
+				// with a valid (existing) redirect URL
 				oAuth = new GoogleOAuth2();
 				
 				oAuth.CLIENT_ID = "XXXXXXXXXXXXXX"
 				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
 				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
 				
-				
-				
+					
 				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 				
 				// we want to delegate to the framework the management of session and tokens
@@ -148,8 +148,8 @@
 				
 				// caldriveClient.files.files_list to populate the list of files
 				driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
-				driveClient.files.files_list(-1, '', "", "items(description,id,parents,title)"); // to restrict to only specific some fields
-				//driveClient.files.files_list();
+				//driveClient.files.files_list(-1, '', "", "items(description,id,parents,title)"); // to restrict to only specific fields
+				driveClient.files.files_list();
 			}
 			
 			protected function btn_get_list_clickHandler(event:MouseEvent):void
@@ -538,6 +538,21 @@
 				driveClient.permissions.permissions_list(this.ti_permissions_file_id.text);
 				
 			}
+			protected function btn_update_permissions(event:MouseEvent = null):void
+			{
+				
+				var handler:Function = function(e:GoogleDriveEvent):void{
+					trace("btn_update_permissions-handler");
+					btn_get_permissions_list_clickHandler();
+				}
+				
+				driveClient.permissions.addEventListener(GoogleDriveEvent.PERMISSIONS_UPDATE, handler);
+				var googlePermission:GoogleDrivePermission = new GoogleDrivePermission();
+				//googlePermission.type = "user";
+				this.list_permissions.selectedItem.role = ti_permissions_permission_role.text;
+				driveClient.permissions.permissions_update(this.ti_permissions_file_id.text, this.list_permissions.selectedItem.id, this.list_permissions.selectedItem);
+				
+			}
 			
 			//// END PERMISSIONS ////
 			
@@ -694,7 +709,10 @@
 				<s:VGroup width="20%">
 					<s:Label text="Permissions" />
 					<s:TextInput id="ti_permissions_file_id" prompt="fileId" />
+					
+					<s:TextInput id="ti_permissions_permission_role" prompt="role" enabled="{this.list_permissions.selectedItem != null}" />
 					<s:Button label="Permissions list" click="btn_get_permissions_list_clickHandler(event)" enabled="{this.ti_permissions_file_id.text != ''}" width="100%" />
+					<s:Button label="Update permission" click="btn_update_permissions(event)" enabled="{this.list_permissions.selectedItem != null}" width="100%" />
 				</s:VGroup>
 				
 				<s:TextArea width="40%" height="100%" id="ta_permission" />
