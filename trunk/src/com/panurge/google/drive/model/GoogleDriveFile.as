@@ -133,52 +133,62 @@ package com.panurge.google.drive.model
 		/**
 		 * The filename when uploading this file. This will only be populated on files with content stored in Drive.	
 		 */
-		public var originalFilename:String = ""; //	string	
+		public var originalFilename:String = "";	
 		/**
 		 * The number of quota bytes used by this file.
 		 */
-		public var quotaBytesUsed:Number = 0; //	long		
+		public var quotaBytesUsed:Number = 0;		
 		/**
 		 * Name(s) of the owner(s) of this file.	
 		 */
-		public var ownerNames:Array = null; // list	
+		public var ownerNames:Array = null;	
 		/**
-		 * 
+		 * Name of the last user to modify this file. This will only be populated if a user has edited this file.
 		 */
-		public var lastModifyingUserName:String = ""; //	string	Name of the last user to modify this file. This will only be populated if a user has edited this file.	
+		public var lastModifyingUserName:String = "";		
 		/**
-		 * 
+		 * Whether the file can be edited by the current user.
 		 */
-		public var editable:Boolean = false; //	boolean	Whether the file can be edited by the current user.	
+		public var editable:Boolean = false;		
 		/**
-		 * 
+		 * 	Whether writers can share the document with other users.
 		 */
-		public var writersCanShare:Boolean = false; //	boolean	Whether writers can share the document with other users.	
+		public var writersCanShare:Boolean = false;	
 		/**
-		 * 
+		 * A link to the file's thumbnail.
 		 */
-		public var thumbnailLink:String = ""; //	string	A link to the file's thumbnail.	
+		public var thumbnailLink:String = "";		
 		/**
-		 * 
+		 * Last time this file was viewed by the user (formatted RFC 3339 timestamp).
 		 */
-		public var lastViewedByMeDate:String = ""; //	datetime	Last time this file was viewed by the user (formatted RFC 3339 timestamp).
-
+		public var lastViewedByMeDate:String = "";	
 		
 		/**
-		 * 
+		 * 	A link for downloading the content of the file in a browser using cookie based authentication. In cases where the content is shared publicly, the content can be downloaded without any credentials.	
 		 */
-		public var webContentLink:String = ""; //	string	A link for downloading the content of the file in a browser using cookie based authentication. In cases where the content is shared publicly, the content can be downloaded without any credentials.	
-		/**
-		 * 
-		 */
-		public var explicitlyTrashed:Boolean; //	boolean	Whether this file has been explicitly trashed, as opposed to recursively trashed. This will only be populated if the file is trashed.	
+		public var webContentLink:String = ""; 
 		
+		/**
+		 * A link providing access to static web assets (HTML, CSS, JS, etc) in a public folder hierarchy using filenames in a relative path. 
+		 */
+		public var webViewLink:String = "";
+		
+		/**
+		 * A link to the file's icon.
+		 */
+		public var iconLink:String = "";
+		
+		/**
+		 * Whether this file has been explicitly trashed, as opposed to recursively trashed. This will only be populated if the file is trashed.	
+		
+		 */
+		public var explicitlyTrashed:Boolean; 
 		// TODO set object model
 		/**
-		 * 
-		 */
-		public var imageMediaMetadata:Object; //	object	Metadata about image media. This will only be present for image types, and its contents will depend on what can be parsed from the image content.
+		 * Metadata about image media. This will only be present for image types, and its contents will depend on what can be parsed from the image content.
 		
+		 */
+		public var imageMediaMetadata:Object; 
 		
 		
 		public function GoogleDriveFile()
