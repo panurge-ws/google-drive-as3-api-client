@@ -188,7 +188,7 @@ package com.panurge.google.drive.model
 		 * Metadata about image media. This will only be present for image types, and its contents will depend on what can be parsed from the image content.
 		
 		 */
-		public var imageMediaMetadata:Object; 
+		public var imageMediaMetadata:Object;
 		
 		
 		public function GoogleDriveFile()

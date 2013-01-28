@@ -33,6 +33,8 @@ package com.panurge.google
 	import com.panurge.google.drive.events.GoogleDriveEvent;
 	import com.panurge.google.drive.services.GoogleDriveClient;
 	
+	import flash.events.ErrorEvent;
+	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
 	import flash.geom.Rectangle;
@@ -310,6 +312,43 @@ package com.panurge.google
 		{
 			var authHeader:URLRequestHeader = new URLRequestHeader("Authorization", "OAuth " + accessToken);
 			return authHeader;
+		}
+		
+		public function logOut():void
+		{
+			if (!stageWebView){
+				stageWebView = new StageWebView();
+			}
+			
+			
+			stageWebView.addEventListener(Event.COMPLETE, onLogoutComplete);
+			stageWebView.addEventListener(ErrorEvent.ERROR, onLogoutError);
+			stageWebView.loadURL("https://accounts.google.com/logout");
+			
+		}
+		
+		protected function onLogoutError(event:ErrorEvent):void
+		{
+			stageWebView.removeEventListener(Event.COMPLETE, onLogoutComplete);
+			stageWebView.removeEventListener(ErrorEvent.ERROR, onLogoutError);
+			dispatchEvent(new GoogleOAuth2Event(GoogleOAuth2Event.LOGOUT_FAULT, null, null));
+		}
+		
+		private function onLogoutComplete(e:Event):void
+		{
+			
+			if (manageSession){
+				
+				GoogleOAuth2Settings.accessToken = "";
+				GoogleOAuth2Settings.refreshToken = "";
+				GoogleOAuth2Settings.tokenExpireTime = -1;
+				GoogleOAuth2Settings.save();
+				
+			}
+			
+			stageWebView.removeEventListener(Event.COMPLETE, onLogoutComplete);
+			stageWebView.removeEventListener(ErrorEvent.ERROR, onLogoutError);
+			dispatchEvent(new GoogleOAuth2Event(GoogleOAuth2Event.LOGOUT_SUCCESS, null, null));
 		}
 	}
 }
