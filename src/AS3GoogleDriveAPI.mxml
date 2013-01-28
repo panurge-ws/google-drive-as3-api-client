@@ -6,6 +6,7 @@
 		<![CDATA[
 			import com.panurge.google.GoogleOAuth2;
 			import com.panurge.google.GoogleOAuth2Event;
+			import com.panurge.google.GoogleOAuth2Settings;
 			import com.panurge.google.drive.events.GoogleDriveEvent;
 			import com.panurge.google.drive.model.GoogleDriveChangesList;
 			import com.panurge.google.drive.model.GoogleDriveChildrenList;
@@ -41,13 +42,15 @@
 				// see https://developers.google.com/drive/quickstart
 				// please register your app as a Web Application app in the Google API console
 				// with a valid (existing) redirect URL
+				
+				
+				
 				oAuth = new GoogleOAuth2();
 				
 				oAuth.CLIENT_ID = "XXXXXXXXXXXXXX"
 				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
 				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
 				
-					
 				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 				
 				// we want to delegate to the framework the management of session and tokens
@@ -57,6 +60,8 @@
 				driveClient = new GoogleDriveClient(oAuth);
 				driveClient.addEventListener(GoogleDriveEvent.ERROR_EVENT, onApiError);
 				driveClient.addEventListener(GoogleDriveEvent.UPLOAD_ERROR, onApiError);
+				
+				GoogleDriveClient.auto_detect_mimetype = true;
 				
 				// creates a StageWebView to host Login/Auth page prompted by Google Auth
 				stageWebView = new StageWebView();
@@ -146,6 +151,8 @@
 				stageWebView.dispose();
 				stageWebView = null;
 				
+				btn_logout.visible = true;
+				
 				// caldriveClient.files.files_list to populate the list of files
 				driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
 				//driveClient.files.files_list(-1, '', "", "items(description,id,parents,title)"); // to restrict to only specific fields
@@ -193,7 +200,7 @@
 					fileDrive.title = fileRef.name;
 					fileDrive.description = "Any description you need";
 					// if you have erro in uploading text files, force the mimetype 
-					// fileDrive.mimeType = "application/octet-stream";
+					fileDrive.mimeType = "application/x-shockwave-flash";
 					var parent:GoogleDriveParent = new GoogleDriveParent();
 					parent.id = "0B1HspwNNGa2QcTVmQm1JVlBieXc";
 					fileDrive.parents = [parent];
@@ -582,15 +589,41 @@
 			
 			
 			
+			protected function btn_logout_clickHandler(event:MouseEvent):void
+			{
+				if (oAuth){
+					oAuth.addEventListener(GoogleOAuth2Event.LOGOUT_SUCCESS, onLogoutSuccess);
+					oAuth.addEventListener(GoogleOAuth2Event.LOGOUT_FAULT, onLogoutFault);
+					oAuth.stageWebView = new StageWebView();
+					oAuth.logOut();
+				}
+			}
+			
+			protected function onLogoutSuccess(event:Event):void
+			{
+				oAuth.removeEventListener(GoogleOAuth2Event.LOGOUT_SUCCESS, onLogoutSuccess);
+				oAuth.removeEventListener(GoogleOAuth2Event.LOGOUT_FAULT, onLogoutFault);
+				Alert.show("Logout success");
+			}
+			
+			protected function onLogoutFault(event:Event):void
+			{
+				oAuth.removeEventListener(GoogleOAuth2Event.LOGOUT_SUCCESS, onLogoutSuccess);
+				oAuth.removeEventListener(GoogleOAuth2Event.LOGOUT_FAULT, onLogoutFault);
+				Alert.show("Logout Fault");
+			}
+			
 		]]>
 	</fx:Script>
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
 	
-	<s:TabBar dataProvider="{this.view_stack}" width="100%" />
+	<s:TabBar dataProvider="{this.view_stack}" top="30" width="100%" />
 	
-	<mx:ViewStack id="view_stack" top="30" bottom="0" width="100%">
+	<s:Button id="btn_logout" label="Logout" visible="false" right="10" top="5" click="btn_logout_clickHandler(event)" />
+	
+	<mx:ViewStack id="view_stack" top="60" bottom="0" width="100%">
 		
 		<s:NavigatorContent label="Files" width="100%" height="100%">
 			

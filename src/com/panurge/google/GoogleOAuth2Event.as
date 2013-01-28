@@ -38,6 +38,8 @@ package com.panurge.google
 		public static const REFRESH_TOKEN_FAULT:String = "REFRESH_TOKEN_FAULT";
 		public static const AUTH_SUCCESS:String = "AUTH_SUCCESS";
 		public static const AUTH_FAULT:String = "AUTH_FAULT";
+		public static const LOGOUT_SUCCESS:String = "LOGOUT_SUCCESS";
+		public static const LOGOUT_FAULT:String = "LOGOUT_FAULT";
 		
 		public var message:String = null;
 		public var code:String = null;
