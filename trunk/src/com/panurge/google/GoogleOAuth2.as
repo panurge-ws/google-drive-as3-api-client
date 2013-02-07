@@ -314,6 +314,11 @@ package com.panurge.google
 			return authHeader;
 		}
 		
+		/**
+		 * Logout from Google Account (please, pass a valid stageWeView before calling this) 
+		 * If you set manageSession = true, the API will delete also the info stored in GoogleOAuth2Settings.
+		 * 
+		 */
 		public function logOut():void
 		{
 			if (!stageWebView){

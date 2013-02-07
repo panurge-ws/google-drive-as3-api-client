@@ -4,6 +4,8 @@ package com.panurge.google.drive.services
 	import com.panurge.google.IGoogleOAuth2;
 	import com.panurge.google.drive.events.GoogleDriveEvent;
 	
+	import flash.utils.ByteArray;
+	
 	public class DriveServiceBase extends GoogleServiceBase
 	{
 		public function DriveServiceBase(oauth:IGoogleOAuth2)
@@ -25,6 +27,11 @@ package com.panurge.google.drive.services
 			
 			var resultObject:Object = null;
 			var eventToDispatch:GoogleDriveEvent;
+			
+			if (urlLoader.data is ByteArray){
+				resultObject = urlLoader.data;
+				return resultObject;
+			}
 			
 			if (urlLoader.data != null && urlLoader.data != ""){
 				// let try catch to avoid JSON casting problems
