@@ -3,8 +3,17 @@
 *Refer to the example .mxml in "src" folder to understand how the framework works.*
 
 ==WARNING==
-When you register your app in the Google API Console, choose a "Web Application" type 
-with a valid (exiting) redirect url 
+Please register your app key in the Google API console as:
+
+- a Web Application app in the Google API console with a valid (existing) redirect URL
+
+OR
+
+- an Installed Application -> Installed Application Type: Other
+				
+
+If you have used a Web Application method before, you need to logout first and then test the Installed Application Type method
+				
 
 See the docs contained in "docs" folder;
 
