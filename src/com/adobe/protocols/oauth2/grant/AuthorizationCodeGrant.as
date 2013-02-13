@@ -1,5 +1,7 @@
 package com.adobe.protocols.oauth2.grant
 {
+	import com.adobe.protocols.oauth2.OAuth2Const;
+	
 	import flash.media.StageWebView;
 
 	/**
@@ -16,6 +18,7 @@ package com.adobe.protocols.oauth2.grant
 		private var _redirectUri:String;
 		private var _scope:String;
 		private var _state:Object;
+		private var _queryParams:Object;
 		
 		/**
 		 * Constructor.
@@ -26,8 +29,9 @@ package com.adobe.protocols.oauth2.grant
 		 * @param redirectUri The redirect URI to return to after the authorization process has completed
 		 * @param scope (Optional) The scope of the access request expressed as a list of space-delimited, case-sensitive strings
 		 * @param state (Optional) An opaque value used by the client to maintain state between the request and callback
+		 * @param queryParams (Optional) Additional query parameters that can be passed to the authorization URL
 		 */
-		public function AuthorizationCodeGrant(stageWebView:StageWebView, clientId:String, clientSecret:String, redirectUri:String, scope:String = null, state:Object = null)
+		public function AuthorizationCodeGrant(stageWebView:StageWebView, clientId:String, clientSecret:String, redirectUri:String, scope:String = null, state:Object = null, queryParams:Object = null)
 		{
 			_stageWebView = stageWebView;
 			_clientId = clientId;
@@ -35,6 +39,7 @@ package com.adobe.protocols.oauth2.grant
 			_redirectUri = redirectUri;
 			_scope = scope;
 			_state = state;
+			_queryParams = queryParams;
 		}  // AuthorizationCodeGrant
 		
 		/**
@@ -94,11 +99,19 @@ package com.adobe.protocols.oauth2.grant
 		}  // state
 		
 		/**
+		 * Additional query parameters that can be passed to the authorization URL.
+		 */
+		public function get queryParams():Object
+		{
+			return _queryParams;
+		}  // queryParams
+		
+		/**
 		 * Convenience method for getting the full authorization URL.
 		 */
 		public function getFullAuthUrl(authEndpoint:String):String
 		{
-			var url:String = authEndpoint + "?response_type=code&client_id=" + clientId + "&redirect_uri=" + redirectUri + "&access_type=offline";
+			var url:String = authEndpoint + "?response_type=" + OAuth2Const.RESPONSE_TYPE_AUTHORIZATION_CODE + "&client_id=" + clientId + "&redirect_uri=" + redirectUri;
 			
 			// scope is optional
 			if (scope != null && scope.length > 0)
@@ -110,6 +123,15 @@ package com.adobe.protocols.oauth2.grant
 			if (state != null)
 			{
 				url += "&state=" + state;
+			}  // if statement
+			
+			// add additional optional query params, if any
+			if (queryParams != null)
+			{
+				for (var queryParam:String in queryParams)
+				{
+					url += "&" + queryParam + "=" + queryParams[queryParam];
+				}  // for loop
 			}  // if statement
 			
 			return url;
