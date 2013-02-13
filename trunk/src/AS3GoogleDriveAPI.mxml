@@ -40,8 +40,13 @@
 				
 				// instantiates the OAuth2 setting
 				// see https://developers.google.com/drive/quickstart
-				// please register your app as a Web Application app in the Google API console
-				// with a valid (existing) redirect URL
+				
+				// please register your app key in the Google API console as
+				// - a Web Application app in the Google API console with a valid (existing) redirect URL
+				// OR
+				// - an Installed Application -> Installed Application Type: Other
+				
+				// if you have used a Web Application method before, you need to logout first and then test the Installed Application Type method
 				
 				
 				
@@ -50,6 +55,7 @@
 				oAuth.CLIENT_ID = "XXXXXXXXXXXXXX"
 				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
 				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
+				
 				
 				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 				
@@ -83,10 +89,14 @@
 				if (event.data){
 					if (event.data is String){
 						Alert.show("onAPIError\nerror code: " + event.data);
-						
 					}
 					else{
-						Alert.show("onAPIError\nerror code: " + event.data.code + "\nerror message: " + event.data.message);
+						if (event.data.code && event.data.message){
+							Alert.show("onAPIError\nerror code: " + event.data.code + "\nerror message: " + event.data.message);
+						}
+						else{
+							Alert.show("onAPIError");
+						}
 					}
 				}
 				else{
@@ -424,7 +434,7 @@
 					
 					downloadedData = e.data;
 				}
-				driveClient.files.addEventListener(GoogleDriveEvent.FILE_DOWNLOAD,handler);
+				driveClient.files.addEventListener(GoogleDriveEvent.FILE_DOWNLOAD, handler);
 				driveClient.files.file_download((this.list_files.selectedItem as GoogleDriveFile));
 			}
 			

@@ -136,7 +136,7 @@ package com.adobe.protocols.oauth2
 			
 			// define POST parameters
 			var urlVariables : URLVariables = new URLVariables();  
-			urlVariables.grant_type = "refresh_token"; 
+			urlVariables.grant_type = OAuth2Const.GRANT_TYPE_REFRESH_TOKEN; 
 			urlVariables.client_id = clientId;
 			urlVariables.client_secret = clientSecret;
 			urlVariables.refresh_token = refreshToken;
@@ -260,7 +260,7 @@ package com.adobe.protocols.oauth2
 			function onLocationChanging(locationChangeEvent:LocationChangeEvent):void
 			{
 				log.info("Loading URL: " + locationChangeEvent.location);
-				if (locationChangeEvent.location.indexOf(authorizationCodeGrant.redirectUri) == 0)
+				if (locationChangeEvent.location.indexOf(authorizationCodeGrant.redirectUri) == 0 && locationChangeEvent.location.indexOf(OAuth2Const.RESPONSE_PROPERTY_AUTHORIZATION_CODE) > 0)
 				{
 					log.info("Redirect URI encountered (" + authorizationCodeGrant.redirectUri + ").  Extracting values from path.");
 					
@@ -273,35 +273,7 @@ package com.adobe.protocols.oauth2
 					if (code != null)
 					{
 						log.debug("Authorization code: " + code);
-						
-						// set up URL request
-						var urlRequest:URLRequest = new URLRequest(tokenEndpoint);
-						var urlLoader:URLLoader = new URLLoader();
-						urlRequest.method = URLRequestMethod.POST;
-						
-						// define POST parameters
-						var urlVariables : URLVariables = new URLVariables();  
-						urlVariables.grant_type = "authorization_code"; 
-						urlVariables.code = code;
-						urlVariables.redirect_uri = authorizationCodeGrant.redirectUri;
-						urlVariables.client_id = authorizationCodeGrant.clientId;
-						urlVariables.client_secret = authorizationCodeGrant.clientSecret;
-						urlRequest.data = urlVariables;
-						
-						// attach event listeners
-						urlLoader.addEventListener(Event.COMPLETE, onGetAccessTokenResult);
-						urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onGetAccessTokenError);
-						urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onGetAccessTokenError);
-						
-						// make the call
-						try
-						{
-							urlLoader.load(urlRequest);
-						}  // try statement
-						catch (error:Error)
-						{
-							log.error("Error loading token endpoint \"" + tokenEndpoint + "\"");
-						}  // catch statement
+						getAccessTokenWithAuthCode(code);
 					}  // if statement
 					else
 					{
@@ -311,6 +283,38 @@ package com.adobe.protocols.oauth2
 						dispatchEvent(getAccessTokenEvent);
 					}  // else statement
 				}  // if statement
+			}  // onLocationChange
+			
+			function getAccessTokenWithAuthCode(code:String):void
+			{
+				// set up URL request
+				var urlRequest:URLRequest = new URLRequest(tokenEndpoint);
+				var urlLoader:URLLoader = new URLLoader();
+				urlRequest.method = URLRequestMethod.POST;
+				
+				// define POST parameters
+				var urlVariables : URLVariables = new URLVariables();  
+				urlVariables.grant_type = OAuth2Const.GRANT_TYPE_AUTHORIZATION_CODE; 
+				urlVariables.code = code;
+				urlVariables.redirect_uri = authorizationCodeGrant.redirectUri;
+				urlVariables.client_id = authorizationCodeGrant.clientId;
+				urlVariables.client_secret = authorizationCodeGrant.clientSecret;
+				urlRequest.data = urlVariables;
+				
+				// attach event listeners
+				urlLoader.addEventListener(Event.COMPLETE, onGetAccessTokenResult);
+				urlLoader.addEventListener(IOErrorEvent.IO_ERROR, onGetAccessTokenError);
+				urlLoader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onGetAccessTokenError);
+				
+				// make the call
+				try
+				{
+					urlLoader.load(urlRequest);
+				}  // try statement
+				catch (error:Error)
+				{
+					log.error("Error loading token endpoint \"" + tokenEndpoint + "\"");
+				}  // catch statement
 				
 				function onGetAccessTokenResult(event:Event):void
 				{
@@ -347,16 +351,30 @@ package com.adobe.protocols.oauth2
 					
 					dispatchEvent(getAccessTokenEvent);
 				}  // onGetAccessTokenError
-			}  // onLocationChange
+			}  // getAccessTokenWithAuthCode
 			
 			function onStageWebViewComplete(event:Event):void
 			{
-				log.info("Auth URL loading complete after " + (new Date().time - startTime) + "ms");
+				// Note: Special provision made particularly for Google OAuth 2 implementation for installed
+				//       applications.  Particularly, when we see a certain redirect URI, we must look for the authorization
+				//       code in the page title as opposed to in the URL.  See https://developers.google.com/accounts/docs/OAuth2InstalledApp#choosingredirecturi
+				//       for more information.
+				if (authorizationCodeGrant.redirectUri == OAuth2Const.GOOGLE_INSTALLED_APPLICATION_REDIRECT_URI && event.currentTarget.title.indexOf(OAuth2Const.RESPONSE_TYPE_AUTHORIZATION_CODE) > 0)
+				{
+					var codeString:String = event.currentTarget.title.substring(event.currentTarget.title.indexOf(OAuth2Const.RESPONSE_TYPE_AUTHORIZATION_CODE));
+					var code:String = codeString.split("=")[1];
+					log.debug("Authorization code extracted from page title: " + code);
+					getAccessTokenWithAuthCode(code);
+				}
+				else
+				{
+					log.info("Auth URL loading complete after " + (new Date().time - startTime) + "ms");
+				}
 			}  // onStageWebViewComplete
 			
-			function onStageWebViewError(event:ErrorEvent):void
+			function onStageWebViewError(errorEvent:ErrorEvent):void
 			{
-				log.error("Error occurred with StageWebView: " + event);
+				log.error("Error occurred with StageWebView: " + errorEvent);
 				getAccessTokenEvent.errorCode = "STAGE_WEB_VIEW_ERROR";
 				getAccessTokenEvent.errorMessage = "Error occurred with StageWebView";
 				dispatchEvent(getAccessTokenEvent);
@@ -382,18 +400,18 @@ package com.adobe.protocols.oauth2
 			log.info("Loading auth URL: " + implicitGrant.getFullAuthUrl(authEndpoint));
 			implicitGrant.stageWebView.loadURL(implicitGrant.getFullAuthUrl(authEndpoint));
 			
-			function onLocationChange(event:LocationChangeEvent):void
+			function onLocationChange(locationChangeEvent:LocationChangeEvent):void
 			{
-				log.info("Loading URL: " + event.location);
-				if (event.location.indexOf(implicitGrant.redirectUri) == 0)
+				log.info("Loading URL: " + locationChangeEvent.location);
+				if (locationChangeEvent.location.indexOf(implicitGrant.redirectUri) == 0 && locationChangeEvent.location.indexOf(OAuth2Const.RESPONSE_PROPERTY_ACCESS_TOKEN) > 0)
 				{
 					log.info("Redirect URI encountered (" + implicitGrant.redirectUri + ").  Extracting values from path.");
 					
 					// stop event from propogating
-					event.preventDefault();
+					locationChangeEvent.preventDefault();
 					
 					// determine if authorization was successful
-					var queryParams:Object = extractQueryParams(event.location);
+					var queryParams:Object = extractQueryParams(locationChangeEvent.location);
 					var accessToken:String = queryParams.access_token;
 					if (accessToken != null)
 					{
@@ -411,9 +429,9 @@ package com.adobe.protocols.oauth2
 				}  // if statement
 			}  // onLocationChange
 			
-			function onStageWebViewError(event:ErrorEvent):void
+			function onStageWebViewError(errorEvent:ErrorEvent):void
 			{
-				log.error("Error occurred with StageWebView: " + event);
+				log.error("Error occurred with StageWebView: " + errorEvent);
 				getAccessTokenEvent.errorCode = "STAGE_WEB_VIEW_ERROR";
 				getAccessTokenEvent.errorMessage = "Error occurred with StageWebView";
 				dispatchEvent(getAccessTokenEvent);
@@ -437,7 +455,7 @@ package com.adobe.protocols.oauth2
 			
 			// define POST parameters
 			var urlVariables : URLVariables = new URLVariables();  
-			urlVariables.grant_type = "password";
+			urlVariables.grant_type = OAuth2Const.GRANT_TYPE_RESOURCE_OWNER_CREDENTIALS;
 			urlVariables.client_id = resourceOwnerCredentialsGrant.clientId;
 			urlVariables.client_secret = resourceOwnerCredentialsGrant.clientSecret;
 			urlVariables.username = resourceOwnerCredentialsGrant.username;
