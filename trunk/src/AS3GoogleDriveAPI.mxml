@@ -123,7 +123,7 @@
 					stageWebView.addEventListener(LocationChangeEvent.LOCATION_CHANGE, onLocationChanging);
 					
 					clearTimeout(delayStageWebViewID);
-					delayStageWebViewID = setTimeout(function(){
+					delayStageWebViewID = setTimeout(function():void{
 						trace("Timeout, no URL redirect detected, we need the stageWebView, to grant the app");
 						stageWebView.viewPort = new Rectangle(0,0,stage.stageWidth,stage.stageHeight);
 						stageWebView.stage = stage;
@@ -193,7 +193,7 @@
 				
 				
 				
-				var onFileRefSelect:Function = function(e:Event){
+				var onFileRefSelect:Function = function(e:Event):void{
 					var ba:ByteArray = new ByteArray();
 					var fileStream:FileStream = new FileStream();
 					fileStream.open(fileRef,FileMode.READ);
@@ -231,7 +231,7 @@
 				
 				
 				
-				var onFileRefSelect:Function = function(e:Event){
+				var onFileRefSelect:Function = function(e:Event):void{
 					var ba:ByteArray = new ByteArray();
 					var fileStream:FileStream = new FileStream();
 					fileStream.open(file,FileMode.READ);
@@ -252,7 +252,7 @@
 					
 					
 				};
-				file.addEventListener(Event.CANCEL,function(){file.cancel()});
+				file.addEventListener(Event.CANCEL,function():void{file.cancel()});
 				file.addEventListener(Event.SELECT, onFileRefSelect);
 				file.browse();
 			}
@@ -429,7 +429,7 @@
 					driveClient.files.removeEventListener(GoogleDriveEvent.FILE_DOWNLOAD,handler);
 					var file:File = File.desktopDirectory.resolvePath((list_files.selectedItem as GoogleDriveFile).title);
 					file.addEventListener(Event.SELECT,onFileSelect);
-					file.addEventListener(Event.CANCEL,function(){file.cancel()});
+					file.addEventListener(Event.CANCEL,function():void{file.cancel()});
 					file.browseForSave("Save as...");
 					
 					downloadedData = e.data;
