@@ -42,8 +42,6 @@ package com.panurge.google.drive.services
 	public class Parents extends DriveServiceBase
 	{
 		
-		public var driveClient:GoogleDriveClient;
-		
 		
 		public function Parents(oauth:IGoogleOAuth2)
 		{
@@ -110,7 +108,7 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
-			var objectResult:Object = this.parseResult(event, driveClient);
+			var objectResult:Object = this.parseResult(event);
 			// we got an error
 			if (objectResult == null)
 				return;

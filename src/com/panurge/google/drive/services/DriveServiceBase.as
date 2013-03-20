@@ -4,10 +4,16 @@ package com.panurge.google.drive.services
 	import com.panurge.google.IGoogleOAuth2;
 	import com.panurge.google.drive.events.GoogleDriveEvent;
 	
+	import flash.events.IOErrorEvent;
+	import flash.events.SecurityErrorEvent;
 	import flash.utils.ByteArray;
+	
+	import mx.utils.ObjectUtil;
 	
 	public class DriveServiceBase extends GoogleServiceBase
 	{
+		public var driveClient:GoogleDriveClient;
+		
 		public function DriveServiceBase(oauth:IGoogleOAuth2)
 		{
 			super(oauth);
@@ -21,7 +27,7 @@ package com.panurge.google.drive.services
 		 * @return 
 		 * 
 		 */
-		public function parseResult(event:*, driveClient:GoogleDriveClient = null):Object
+		public function parseResult(event:*):Object
 		{
 			var urlLoader:* = event.currentTarget;
 			
@@ -69,6 +75,57 @@ package com.panurge.google.drive.services
 			}
 			
 			return resultObject;
+		}
+		
+		/**
+		 * 
+		 * @param event
+		 * 
+		 */
+		protected override function onSecurityError(event:SecurityErrorEvent):void
+		{
+			var urlLoader:* = event.currentTarget;
+			removeListeners(urlLoader);
+			trace("onSecurityError", ObjectUtil.toString(event));
+			dispatchEvent(new GoogleDriveEvent(GoogleDriveEvent.ERROR_EVENT,{code:event.errorID,message:event.toString()}));
+			if (driveClient){
+				driveClient.dispatchEvent(new GoogleDriveEvent(GoogleDriveEvent.ERROR_EVENT,{code:event.errorID,message:event.toString()}));
+			}
+		}
+		
+		/**
+		 * 
+		 * @param event
+		 * 
+		 */
+		protected override function onError(event:IOErrorEvent):void
+		{
+			var urlLoader:* = event.currentTarget;
+			removeListeners(urlLoader);
+			trace("onError", ObjectUtil.toString(event));
+			if (event.currentTarget.data != null){
+				try{
+					var errorObject:Object = JSON.parse(event.currentTarget.data);
+					trace("onError - Code:", errorObject.error.code);
+					trace("onError - Message:", errorObject.error.message);
+					trace("onError - Errors:", errorObject.error.errors);
+					dispatchEvent(new GoogleDriveEvent(GoogleDriveEvent.ERROR_EVENT, errorObject.error));
+					if (driveClient){
+						driveClient.dispatchEvent(new GoogleDriveEvent(GoogleDriveEvent.ERROR_EVENT, errorObject.error));
+					}
+					return;
+				}
+				catch(e:Error){
+					trace("onError", e);
+				}
+			}
+			
+			
+			
+			dispatchEvent(new GoogleDriveEvent(GoogleDriveEvent.ERROR_EVENT));
+			if (driveClient){
+				driveClient.dispatchEvent(new GoogleDriveEvent(GoogleDriveEvent.ERROR_EVENT));
+			}
 		}
 	}
 }

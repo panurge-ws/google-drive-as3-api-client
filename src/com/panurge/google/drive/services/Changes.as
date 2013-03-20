@@ -47,9 +47,6 @@ package com.panurge.google.drive.services
 	public class Changes extends DriveServiceBase
 	{
 		
-		public var driveClient:GoogleDriveClient;
-		
-		
 		public function Changes(oauth:IGoogleOAuth2)
 		{
 			super(oauth);
@@ -139,7 +136,7 @@ package com.panurge.google.drive.services
 		
 		override protected function onLoadComplete(event:Event):void
 		{
-			var objectResult:Object = this.parseResult(event, driveClient);
+			var objectResult:Object = this.parseResult(event);
 			// we got an error
 			if (objectResult == null)
 				return;

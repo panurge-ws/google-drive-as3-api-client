@@ -623,6 +623,16 @@
 				Alert.show("Logout Fault");
 			}
 			
+			protected function btn_getfolders_clickHandler(event:MouseEvent):void
+			{
+				this.list_files.dataProvider = new ArrayCollection();
+				if (!driveClient.files.hasEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE)){
+					driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
+				}
+				driveClient.files.files_list(-1,"","mimeType = '" + GoogleDriveClient.MIMETYPE_GOOGLE_FOLDER + "'");
+				//driveClient.files.files_list(-1,"","'0B1HspwNNGa2QZzY2ZWxTUlVEaU0' in parents");
+			}
+			
 		]]>
 	</fx:Script>
 	<fx:Declarations>
@@ -655,6 +665,7 @@
 					<s:Button id="btn_touch" label="Touch" click="btn_touch_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
 					<s:Button id="btn_untrash" label="Untrash" click="btn_untrash_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
 					<s:Button id="btn_download" label="Download" click="btn_download_clickHandler(event)" width="100%" enabled="{this.list_files.selectedIndex > -1}" />
+					<s:Button id="btn_getfolders" label="Get folders" click="btn_getfolders_clickHandler(event)" width="100%" />
 				</s:VGroup>
 				
 				<s:TextArea width="40%" height="100%" id="ta_file" />
