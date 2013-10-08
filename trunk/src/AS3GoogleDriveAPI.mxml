@@ -56,7 +56,6 @@
 				oAuth.CLIENT_SECRET = "XXXXXXXXXXXX";
 				oAuth.REDIRECT_URI = "XXXXXXXXXXXX";
 				
-				
 				oAuth.SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile";
 				
 				// we want to delegate to the framework the management of session and tokens
@@ -210,10 +209,10 @@
 					fileDrive.title = fileRef.name;
 					fileDrive.description = "Any description you need";
 					// if you have erro in uploading text files, force the mimetype 
-					fileDrive.mimeType = "application/x-shockwave-flash";
-					var parent:GoogleDriveParent = new GoogleDriveParent();
-					parent.id = "0B1HspwNNGa2QcTVmQm1JVlBieXc";
-					fileDrive.parents = [parent];
+					//fileDrive.mimeType = "application/x-shockwave-flash";
+					//var parent:GoogleDriveParent = new GoogleDriveParent();
+					//parent.id = "0B1HspwNNGa2QcTVmQm1JVlBieXc";
+					//fileDrive.parents = [parent];
 					
 					driveClient.files.file_insert(fileDrive, ba);
 					
@@ -630,7 +629,6 @@
 					driveClient.files.addEventListener(GoogleDriveEvent.FILE_LIST_COMPLETE, onListComplete);
 				}
 				driveClient.files.files_list(-1,"","mimeType = '" + GoogleDriveClient.MIMETYPE_GOOGLE_FOLDER + "'");
-				//driveClient.files.files_list(-1,"","'0B1HspwNNGa2QZzY2ZWxTUlVEaU0' in parents");
 			}
 			
 		]]>
